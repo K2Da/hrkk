@@ -1,0 +1,28 @@
+[package]
+name = "hrkk"
+version = "0.1.0"
+authors = ["K2Da <id.k2da@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+tokio = { version = "*", features = ["full"] }
+rusoto_core = "*"
+rusoto_credential = "*"
+rusoto_signature = "*"
+thiserror = "*"
+structopt = "*"
+serde = { version = "*", features = ["derive"] }
+serde_yaml = "*"
+serde_json = "*"
+serde_urlencoded = "*"
+yaml-rust = "*"
+ansi_term = "*"
+dirs = "*"
+chrono = "*"
+prettytable-rs = "*"
+skim = "*"
+humantime = "*"
+xml-rs = "*"
+linked-hash-map = "*"
+Inflector = "*"
+term_size = "*"
