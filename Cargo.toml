@@ -1,28 +1,35 @@
 [package]
 name = "hrkk"
 version = "0.1.1"
+license = "Apache-2.0"
 authors = ["K2Da <id.k2da@gmail.com>"]
 edition = "2018"
+description = "A tool to list up aws resources and print selected resources."
+readme = "README.md"
+homepage = "https://github.com/K2Da/hrkk"
+repository = "https://github.com/K2Da/hrkk"
+keywords = ["aws", "cli"]
 
 [dependencies]
-tokio = { version = "*", features = ["full"] }
-rusoto_core = "*"
-rusoto_credential = "*"
-rusoto_signature = "*"
-thiserror = "*"
-structopt = "*"
-serde = { version = "*", features = ["derive"] }
-serde_yaml = "*"
-serde_json = "*"
-serde_urlencoded = "*"
-yaml-rust = "*"
-ansi_term = "*"
-dirs = "*"
-chrono = "*"
-prettytable-rs = "*"
-skim = "*"
-humantime = "*"
-xml-rs = "*"
-linked-hash-map = "*"
-Inflector = "*"
-term_size = "*"
+tokio = { version = "0.2.*", features = ["full"] }
+rusoto_core = "0.44.*"
+rusoto_credential = "0.44.*"
+rusoto_signature = "0.44.*"
+thiserror = "1.0.*"
+structopt = "0.3.*"
+serde = { version = "1.0.*", features = ["derive"] }
+serde_yaml = "0.8.*"
+serde_json = "1.0.*"
+serde_urlencoded = "0.6.*"
+yaml-rust = "0.4.*"
+ansi_term = "0.12.*"
+dirs = "2.0.*"
+chrono = "0.4.*"
+prettytable-rs = "0.8.*"
+skim = "0.8.*"
+humantime = "2.0.*"
+xml-rs = "0.8.*"
+linked-hash-map = "0.5.*"
+Inflector = "0.11.*"
+term_size = "0.3.*"
+
