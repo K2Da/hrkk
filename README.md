@@ -21,7 +21,9 @@ Use it to input parameter for aws cli, or just to see aws resource status in con
 cargo install hrkk
 ```
 
-### Using binary
+### Using homebrew
+With this command, download binary for mac/linux.
 
-Get the binary in release page and copy it to the directory in the PATH environment variable.
-Binaries are for linux and mac.
+```
+brew install K2Da/tap/hrkk
+```
