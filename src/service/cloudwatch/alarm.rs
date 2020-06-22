@@ -51,6 +51,14 @@ impl AwsResource for Resource {
         (arr, next_token(&yaml))
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["state", "name"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![Constraint::Length(10), Constraint::Min(0)]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
             show::raw(&item["state_value"]),
@@ -58,19 +66,18 @@ impl AwsResource for Resource {
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("alarm_name")
             .raw("namespace", "namespace")
             .raw("description", "alarm_description")
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("state")
                     .raw("value", "state_value")
                     .raw("reason", "state_reason")
                     .raw("reason data", "state_reason_data")
                     .raw("updated", "state_updated_timestamp"),
             )
-            .print_all()
     }
 }

@@ -1,11 +1,9 @@
 use crate::error::Error::*;
 use crate::error::Result;
-use crate::info::{BarInfo, CacheInfo, FetchInfo, ResourceInfo};
 use crate::opts::{Opts, SubCommand};
 use rusoto_core::signature::SignedRequest;
 use rusoto_credential::ChainProvider;
 pub use serde::Serialize;
-use skim::prelude::*;
 use yaml_rust::Yaml;
 
 pub mod cloudwatch;
@@ -32,6 +30,15 @@ pub fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(ssm::document::new()),
         Box::new(ssm::session::new()),
     ]
+}
+
+pub fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
+    for r in all_resources() {
+        if r.name() == name {
+            return r;
+        }
+    }
+    panic!()
 }
 
 #[derive(Serialize)]
@@ -63,33 +70,43 @@ pub enum ApiType {
     },
 }
 
+impl Clone for Box<dyn AwsResource> {
+    fn clone(&self) -> Self {
+        resource_by_name(&self.name())
+    }
+}
+
 pub trait AwsResource: Send + Sync {
     fn info(&self) -> &Info;
 
     fn matching_sub_command(&self) -> Option<SubCommand>;
 
-    fn take_command(&self, sub_command: &SubCommand, _opts: &Opts) -> Result<SkimTarget> {
+    fn take_command(&self, sub_command: &SubCommand, _opts: &Opts) -> Result<ExecuteTarget> {
         match self.matching_sub_command() {
             Some(matching_command) => {
                 if &matching_command == sub_command {
-                    Ok(SkimTarget::ExecuteThis { parameter: None })
+                    Ok(ExecuteTarget::ExecuteThis { parameter: None })
                 } else {
-                    Ok(SkimTarget::None)
+                    Ok(ExecuteTarget::Null)
                 }
             }
             None => panic!("should be overridden."),
         }
     }
 
-    fn without_param(&self, _opts: &Opts) -> SkimTarget {
-        SkimTarget::ExecuteThis { parameter: None }
+    fn without_param(&self, _opts: &Opts) -> ExecuteTarget {
+        ExecuteTarget::ExecuteThis { parameter: None }
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>);
 
+    fn header(&self) -> Vec<&'static str>;
+
+    fn header_width(&self) -> Vec<tui::layout::Constraint>;
+
     fn line(&self, yaml: &Yaml) -> Vec<String>;
 
-    fn detail(&self, yaml: &Yaml) -> String;
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section;
 
     fn name(&self) -> String {
         format!("{}_{}", self.service_name(), self.resource_type_name())
@@ -127,67 +144,37 @@ pub trait AwsResource: Send + Sync {
     }
 }
 
-pub enum SkimTarget {
+pub enum ExecuteTarget {
     ExecuteThis {
         parameter: Option<String>,
     },
     ParameterFromResource {
-        resource_name: String,
+        param_resource: Box<dyn AwsResource>,
     },
     ParameterFromList {
-        list: (String, Vec<(String, String)>),
+        option_name: String,
+        option_list: Vec<String>,
     },
-    None,
+    Null,
 }
 
-pub async fn execute_command(sub_command: &SubCommand, opts: &Opts) -> Result<()> {
+pub async fn execute_command(sub_command: &SubCommand, opts: Opts) -> Result<()> {
+    use ExecuteTarget::*;
     for resource in all_resources() {
-        match resource.take_command(sub_command, opts) {
-            Ok(SkimTarget::ExecuteThis { parameter }) => {
-                execute_with_parameter(&*resource, &parameter, &opts).await?;
+        match resource.take_command(sub_command, &opts.clone()) {
+            Ok(ExecuteThis { parameter }) => {
+                crate::ui::tui(opts.clone(), parameter, Some(resource)).await?;
             }
-            Ok(SkimTarget::ParameterFromResource { resource_name }) => {
-                let param = parameter_from_resource(&resource_name, opts).await?;
-                execute_with_parameter(&*resource, &param, opts).await?;
+            Ok(ParameterFromResource { .. }) | Ok(ParameterFromList { .. }) => {
+                crate::ui::tui(opts.clone(), None, Some(resource)).await?;
             }
-            Ok(SkimTarget::ParameterFromList { list }) => {
-                let param = parameter_from_list(&list).await?;
-                execute_with_parameter(&*resource, &param, opts).await?;
-            }
-            Ok(SkimTarget::None) => (),
+            Ok(ExecuteTarget::Null) => (),
             Err(e) => return Err(e),
         }
     }
     Ok(())
 }
 
-pub async fn parameter_from_resource(
-    parameter_resource_name: &str,
-    opts: &Opts,
-) -> Result<Option<String>> {
-    for parameter_resource in all_resources() {
-        if parameter_resource.name() == parameter_resource_name {
-            let (_, selected_items) =
-                resource_selector(parameter_resource.as_ref(), &None, opts).await?;
-            for item in selected_items {
-                return Ok(Some(item.output().to_string()));
-            }
-        }
-    }
-
-    Ok(None)
-}
-
-pub async fn parameter_from_list(
-    selection: &(String, Vec<(String, String)>),
-) -> Result<Option<String>> {
-    let selected_items = list_selector(selection).await?;
-    for item in selected_items {
-        return Ok(Some(item.output().to_string()));
-    }
-
-    Ok(None)
-}
 pub fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     if let Yaml::Array(array) = tags {
         for tag in array {
@@ -206,106 +193,18 @@ pub fn next_token(yaml: &Yaml) -> Option<String> {
     }
 }
 
-fn print_selected_items(opts: &Opts, selected_items: &Vec<Arc<dyn SkimItem>>) {
+#[allow(dead_code)]
+fn print_selected_items(opts: &Opts, selected_items: &Vec<String>) {
     for (i, item) in selected_items.iter().enumerate() {
         if 0 == i {
-            print!("{}", item.output());
+            print!("{}", item);
         } else {
-            print!("{}{}", opts.delimiter(), item.output());
+            print!("{}{}", opts.delimiter(), item);
         }
     }
 }
 
-pub async fn execute(resource: &dyn AwsResource, opts: &Opts) -> Result<()> {
-    match resource.without_param(opts) {
-        SkimTarget::ExecuteThis { parameter } => {
-            execute_with_parameter(&*resource, &parameter, &opts).await?
-        }
-        SkimTarget::ParameterFromResource { resource_name } => {
-            if let Some(param) = parameter_from_resource(&resource_name, opts).await? {
-                execute_with_parameter(&*resource, &Some(param), opts).await?;
-            }
-        }
-        SkimTarget::ParameterFromList { list } => {
-            let param = parameter_from_list(&list).await?;
-            execute_with_parameter(&*resource, &param, opts).await?;
-        }
-        SkimTarget::None => (),
-    }
-    Ok(())
-}
-
-async fn execute_with_parameter(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<()> {
-    let (yaml_list, selected_items) = resource_selector(resource, parameter, opts).await?;
-
-    print_selected_items(opts, &selected_items);
-
-    if opts.export {
-        export_selected_items(resource, &yaml_list, &selected_items)?;
-    }
-    Ok(())
-}
-
-pub async fn resource_selector(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<(Vec<Yaml>, Vec<Arc<dyn SkimItem>>)> {
-    let mut info = vec![BarInfo::Resource(ResourceInfo {
-        service_name: resource.service_name().to_owned(),
-        command_name: resource.command_name().to_owned(),
-    })];
-
-    if !opts.cache {
-        info.push(BarInfo::Fetch(fetch_loop(resource, parameter, opts).await?));
-    } else {
-        info.push(BarInfo::Cache(CacheInfo {
-            opt_str: opts.colored_string(),
-        }));
-    }
-
-    let yaml_list = read_yaml(resource);
-    let selected_items = crate::skimmer::resources::skim(resource, &yaml_list, &info)?;
-
-    Ok((yaml_list, selected_items))
-}
-
-pub async fn list_selector(
-    list: &(String, Vec<(String, String)>),
-) -> Result<Vec<Arc<dyn SkimItem>>> {
-    Ok(crate::skimmer::list::skim(list)?)
-}
-
-async fn fetch_loop(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<FetchInfo> {
-    let mut info: FetchInfo = FetchInfo::new(opts)?;
-
-    let mut result = vec![];
-    let mut next_token: Option<String> = None;
-    for i in 0..opts.request_count() {
-        info.request_count = i + 1;
-        let (mut list, token) = fetch(resource, parameter, opts, next_token.clone()).await?;
-
-        result.append(&mut list);
-        next_token = token;
-        if next_token.is_none() {
-            info.fetch_all = true;
-            break;
-        }
-    }
-    info.resource_count = result.len();
-    file::store_yaml_list(&Yaml::Array(result), resource)?;
-    Ok(info)
-}
-
-async fn fetch(
+pub async fn fetch(
     resource: &dyn AwsResource,
     parameter: &Option<String>,
     opts: &Opts,
@@ -346,14 +245,14 @@ async fn fetch(
     }
 }
 
+#[allow(dead_code)]
 fn export_selected_items(
     resource: &dyn AwsResource,
     yaml_list: &Vec<Yaml>,
-    selected_items: &Vec<Arc<dyn SkimItem>>,
+    selected_items: &Vec<String>,
 ) -> Result<()> {
-    for (i, item) in selected_items.iter().enumerate() {
+    for (i, item_name) in selected_items.iter().enumerate() {
         for yaml in yaml_list {
-            let item_name = &item.output().to_string();
             if resource.equal(yaml, item_name) {
                 file::store_yaml(
                     yaml,
@@ -370,6 +269,7 @@ fn export_selected_items(
     Ok(())
 }
 
+#[allow(dead_code)]
 fn read_yaml(resource: &dyn AwsResource) -> Vec<Yaml> {
     let mut yaml_list: Vec<Yaml> = vec![];
     match file::restore_yaml(resource) {

@@ -42,17 +42,24 @@ impl AwsResource for Resource {
         json_helper::make_vec(&yaml, "log_groups")
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["name"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![Constraint::Min(0)]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![show::raw(&item["log_group_name"])]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("log_group_name")
             .raw("arn", "arn")
             .time("creation time", "creation_time")
             .raw("metric filter count", "metric_filter_count")
             .byte("stored bytes", "stored_bytes")
-            .print_all()
     }
 }

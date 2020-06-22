@@ -40,6 +40,18 @@ impl AwsResource for Resource {
         json_helper::make_vec(&yaml, "document_identifiers")
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["type", "name", "owner"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![
+            Constraint::Length(10),
+            Constraint::Min(0),
+            Constraint::Min(0),
+        ]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
             show::raw(&item["document_type"]),
@@ -48,8 +60,8 @@ impl AwsResource for Resource {
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("name")
             .raw("format", "document_format")
             .raw("type", "document_type")
@@ -57,10 +69,9 @@ impl AwsResource for Resource {
             .raw("schema version", "schema_version")
             .raw("target type", "target_type")
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("platform types")
                     .raw_array("platform_types"),
             )
-            .print_all()
     }
 }

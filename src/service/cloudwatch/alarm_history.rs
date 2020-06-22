@@ -47,22 +47,33 @@ impl AwsResource for Resource {
         (arr, next_token(&yaml))
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["time", "name", "summary"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![
+            Constraint::Length(10),
+            Constraint::Min(0),
+            Constraint::Min(0),
+        ]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
-            show::raw(&item["alarm_name"]),
             show::time(&item["timestamp"]),
+            show::raw(&item["alarm_name"]),
             show::time(&item["history_summary"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("alarm_name")
             .raw("alarm type", "alarm_type")
             .raw("item type", "history_item_type")
             .raw("summary", "history_summary")
             .time("timestamp", "timestamp")
             .raw("data", "history_data")
-            .print_all()
     }
 }

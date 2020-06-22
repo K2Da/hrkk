@@ -41,17 +41,30 @@ impl AwsResource for Resource {
         json_helper::make_vec(&yaml, "automation_execution_metadata_list")
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["status", "name", "time", "end at"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![
+            Constraint::Length(10),
+            Constraint::Min(22),
+            Constraint::Length(8),
+            Constraint::Length(18),
+        ]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
-            show::raw(&item["document_name"]),
             show::raw(&item["automation_execution_status"]),
+            show::raw(&item["document_name"]),
             show::duration(&item["execution_start_time"], &item["execution_end_time"]),
             show::time(&item["execution_end_time"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("automation_execution_id")
             .raw("status", "automation_execution_status")
             .span(
@@ -63,6 +76,5 @@ impl AwsResource for Resource {
             .raw("document version", "document_version")
             .raw("executed by", "executed_by")
             .raw("mode", "mode")
-            .print_all()
     }
 }

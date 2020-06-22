@@ -36,6 +36,7 @@ pub fn store_response(body: &[u8]) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn store_yaml_list(yaml: &Yaml, resource: &dyn AwsResource) -> Result<()> {
     let path = store_resource_file_path(resource);
     let mut writer = fs::File::create(&path).or(Err(UnableToWriteFileError(path_str(&path))))?;
@@ -50,6 +51,7 @@ pub fn store_yaml_list(yaml: &Yaml, resource: &dyn AwsResource) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn store_yaml(yaml: &Yaml, file_name: &str) -> Result<()> {
     let mut file = fs::File::create(format!("{}.yaml", file_name))
         .or(Err(UnableToWriteFileError(file_name.to_string())))?;
@@ -63,6 +65,7 @@ pub fn store_yaml(yaml: &Yaml, file_name: &str) -> Result<()> {
     Ok(())
 }
 
+#[allow(dead_code)]
 pub fn restore_yaml(resource: &dyn AwsResource) -> Option<Vec<Yaml>> {
     let yaml = fs::read_to_string(store_resource_file_path(resource));
     if let Ok(yaml) = yaml {

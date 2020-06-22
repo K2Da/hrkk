@@ -5,11 +5,10 @@ use structopt::StructOpt;
 mod cache;
 mod color;
 mod error;
-mod info;
 mod opts;
 mod service;
 pub mod show;
-mod skimmer;
+mod ui;
 
 #[tokio::main]
 async fn main() {
@@ -29,17 +28,10 @@ async fn run(opts: opts::Opts) -> Result<()> {
                 CacheCommand::List => cache::list()?,
                 CacheCommand::Clear => cache::clear()?,
             },
-            _ => service::execute_command(sub_command, &opts).await?,
+            _ => service::execute_command(sub_command, opts.clone()).await?,
         },
         None => {
-            let selected_menu = crate::skimmer::commands::skim(service::all_resources(), &opts)?;
-            for menu in selected_menu {
-                for resource in service::all_resources() {
-                    if resource.name() == menu.output() {
-                        service::execute(&*resource, &opts).await?
-                    }
-                }
-            }
+            ui::tui(opts, None, None).await?;
             ()
         }
     }

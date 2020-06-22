@@ -1,4 +1,5 @@
 use crate::service::prelude::*;
+use crate::service::resource_by_name;
 
 #[derive(Serialize)]
 pub struct Resource {
@@ -36,34 +37,42 @@ impl AwsResource for Resource {
         None
     }
 
-    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<SkimTarget> {
+    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<ExecuteTarget> {
         if let SubCommand::Logs {
             command: LogsCommand::LogStream { log_group_name },
         } = sub_command
         {
             match log_group_name {
-                Some(text) => Ok(SkimTarget::ExecuteThis {
+                Some(text) => Ok(ExecuteTarget::ExecuteThis {
                     parameter: Some(text.clone()),
                 }),
                 None => Ok(self.without_param(opts)),
             }
         } else {
-            Ok(SkimTarget::None)
+            Ok(ExecuteTarget::Null)
         }
     }
 
-    fn without_param(&self, opts: &Opts) -> SkimTarget {
+    fn without_param(&self, opts: &Opts) -> ExecuteTarget {
         if opts.cache {
-            SkimTarget::ExecuteThis { parameter: None }
+            ExecuteTarget::ExecuteThis { parameter: None }
         } else {
-            SkimTarget::ParameterFromResource {
-                resource_name: "logs_log_group".to_string(),
+            ExecuteTarget::ParameterFromResource {
+                param_resource: resource_by_name("logs_log_group"),
             }
         }
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
         json_helper::make_vec(&yaml, "log_streams")
+    }
+
+    fn header(&self) -> Vec<&'static str> {
+        vec!["time", "name"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![Constraint::Length(20), Constraint::Min(0)]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {
@@ -76,8 +85,8 @@ impl AwsResource for Resource {
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("log_stream_name")
             .raw("arn", "arn")
             .raw("creation time", "creation_time")
@@ -88,16 +97,15 @@ impl AwsResource for Resource {
             .time("last ingestion", "last_ingestion_time")
             .raw("upload sequence token", "upload_sequence_token")
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("path")
                     .string_attributes(
-                        show::raw(&yaml["log_stream_name"])
+                        crate::show::raw(&yaml["log_stream_name"])
                             .split("/")
                             .enumerate()
                             .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
                             .collect(),
                     ),
             )
-            .print_all()
     }
 }

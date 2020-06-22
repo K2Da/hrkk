@@ -1,14 +1,56 @@
-use crate::show;
-use crate::skimmer::preview_width as width;
-use ansi_term::Color;
 use std::cmp::max;
+use tui::style::Style;
 use yaml_rust::Yaml;
 
-const BORDER_COLOUR: Color = Color::Fixed(244);
-const HEADER_COLOUR: Color = Color::Yellow;
-const NAME_COLOUR: Color = Color::Cyan;
-const VALUE_COLOUR: Color = Color::White;
-const BAD_COLOUR: Color = Color::Red;
+pub enum Txt {
+    Raw(String),
+    Styled(String, Style),
+}
+
+impl Txt {
+    pub fn raw(data: &str) -> Self {
+        Txt::Raw(data.to_string())
+    }
+
+    pub fn styled(data: &str, style: Style) -> Txt {
+        Txt::Styled(data.to_string(), style)
+    }
+}
+
+pub struct Texts(pub Vec<Txt>);
+
+impl Texts {
+    pub fn new() -> Self {
+        Self(vec![])
+    }
+
+    pub fn append(&mut self, other: &mut Texts) {
+        self.0.append(&mut other.0);
+    }
+
+    pub fn append_colored_pairs(&mut self, pairs: Vec<(&str, Option<Color>)>) {
+        for pair in &pairs {
+            match pair {
+                (data, Some(color)) => self.styled(data, Style::new().fg(*color)),
+                (data, None) => self.raw(data),
+            }
+        }
+    }
+
+    pub fn raw(&mut self, data: &str) {
+        self.0.push(Txt::raw(data));
+    }
+
+    pub fn styled(&mut self, data: &str, style: Style) {
+        self.0.push(Txt::styled(data, style));
+    }
+}
+
+use tui::style::Color;
+const BORDER_COLOR: Color = Color::White;
+const HEADER_COLOR: Color = Color::Yellow;
+const NAME_COLOR: Color = Color::Cyan;
+const VALUE_COLOR: Color = Color::White;
 
 #[derive(Debug, Clone)]
 pub struct Section {
@@ -34,55 +76,58 @@ impl Section {
         }
     }
 
-    pub fn tag_name(&mut self, tag: &str, key: &str) -> &mut Self {
+    pub fn tag_name(mut self, tag: &str, key: &str) -> Self {
         self.name = Some(Name::Yaml(
             crate::service::tag_value(&self.yaml[tag], key).clone(),
         ));
         self
     }
 
-    pub fn yaml_name(&mut self, key: &str) -> &mut Self {
+    pub fn yaml_name(mut self, key: &str) -> Self {
         self.name = Some(Name::Yaml(self.yaml[key].clone()));
         self
     }
 
-    pub fn string_name(&mut self, name: &str) -> &mut Self {
+    pub fn string_name(mut self, name: &str) -> Self {
         self.name = Some(Name::String(name.to_string()));
         self
     }
 
-    pub fn span(&mut self, name: &str, span: (&str, &str)) -> &mut Self {
-        self.child(name, &show::span(&self.yaml[span.0], &self.yaml[span.1]))
+    pub fn span(self, name: &str, span: (&str, &str)) -> Self {
+        let span = self::span(&self.yaml[span.0], &self.yaml[span.1]);
+        self.child(name, &span)
     }
 
-    pub fn duration(&mut self, name: &str, duration: (&str, &str)) -> &mut Self {
-        self.child(
-            name,
-            &show::duration(&self.yaml[duration.0], &self.yaml[duration.1]),
-        )
+    pub fn duration(self, name: &str, duration: (&str, &str)) -> Self {
+        let duration = self::duration(&self.yaml[duration.0], &self.yaml[duration.1]);
+        self.child(name, &duration)
     }
 
-    pub fn raw(&mut self, name: &str, key: &str) -> &mut Self {
-        self.child(name, &show::raw(&self.yaml[key]))
+    pub fn raw(self, name: &str, key: &str) -> Self {
+        let raw = self::raw(&self.yaml[key]);
+        self.child(name, &raw)
     }
 
-    pub fn raw2(&mut self, name: &str, key: (&str, &str)) -> &mut Self {
-        self.child(name, &show::raw(&self.yaml[key.0][key.1]))
+    pub fn raw2(self, name: &str, key: (&str, &str)) -> Self {
+        let raw2 = self::raw(&self.yaml[key.0][key.1]);
+        self.child(name, &raw2)
     }
 
-    pub fn str(&mut self, name: &str, val: &str) -> &mut Self {
+    pub fn str(self, name: &str, val: &str) -> Self {
         self.child(name, val)
     }
 
-    pub fn time(&mut self, name: &str, key: &str) -> &mut Self {
-        self.child(name, &show::time(&self.yaml[key]))
+    pub fn time(self, name: &str, key: &str) -> Self {
+        let time = self::time(&self.yaml[key]);
+        self.child(name, &time)
     }
 
-    pub fn byte(&mut self, name: &str, key: &str) -> &mut Self {
-        self.child(name, &show::byte(&self.yaml[key]))
+    pub fn byte(self, name: &str, key: &str) -> Self {
+        let byte = self::byte(&self.yaml[key]);
+        self.child(name, &byte)
     }
 
-    fn child(&mut self, name: &str, val: &str) -> &mut Self {
+    fn child(mut self, name: &str, val: &str) -> Self {
         self.children.push(Child::Attribute(Attribute {
             name: Name::String(name.to_string()),
             value: val.to_owned(),
@@ -90,7 +135,7 @@ impl Section {
         self
     }
 
-    pub fn yaml_pairs(&mut self, root: &str, key_value: (&str, &str)) -> &mut Self {
+    pub fn yaml_pairs(mut self, root: &str, key_value: (&str, &str)) -> Self {
         match &self.yaml[root] {
             Yaml::Array(array) => {
                 for y in array {
@@ -106,13 +151,13 @@ impl Section {
         self
     }
 
-    pub fn raw_array(&mut self, root: &str) -> &mut Self {
+    pub fn raw_array(mut self, root: &str) -> Self {
         match &self.yaml[root] {
             Yaml::Array(array) => {
                 for y in array {
                     self.children.push(Child::Attribute(Attribute {
                         name: Name::String(" ".to_string()),
-                        value: show::raw(&y),
+                        value: self::raw(&y),
                     }));
                 }
             }
@@ -121,7 +166,7 @@ impl Section {
         self
     }
 
-    pub fn string_attributes(&mut self, attrs: Vec<(String, String)>) -> &mut Self {
+    pub fn string_attributes(mut self, attrs: Vec<(String, String)>) -> Self {
         for (name, value) in attrs {
             self.children.push(Child::Attribute(Attribute {
                 name: Name::String(name.to_owned()),
@@ -131,19 +176,25 @@ impl Section {
         self
     }
 
-    pub fn section(&mut self, section: &Section) -> &mut Self {
+    pub fn section(mut self, section: Section) -> Self {
         self.children.push(Child::Section(section.clone()));
         self
     }
 
-    pub fn print_all(&self) -> String {
+    pub fn print_all(&self, width: isize) -> Texts {
         let mut last_lv = 0;
         let mut last_border = 0;
-        self.print(0, &mut last_lv, &mut last_border)
+        self.print(0, &mut last_lv, &mut last_border, width)
     }
 
-    pub fn print(&self, lv: isize, last_lv: &mut isize, last_border: &mut isize) -> String {
-        let mut sb = String::new();
+    pub fn print(
+        &self,
+        lv: isize,
+        last_lv: &mut isize,
+        last_border: &mut isize,
+        width: isize,
+    ) -> Texts {
+        let mut texts = Texts::new();
 
         let span = if lv > 0 {
             rep("│ ", lv)
@@ -151,67 +202,75 @@ impl Section {
             "".to_string()
         };
 
-        sb.push_str(&format!(
-            "{}\n",
-            BORDER_COLOUR.paint(
-                span.clone()
-                    + &lo(lv != 0 && lv <= *last_lv)
-                    + &Self::header_border(lv, last_lv, last_border)
-                    + &ro(lv != 0)
-            )
-        ));
+        texts.styled(
+            &(span.clone()
+                + &lo(lv != 0 && lv <= *last_lv)
+                + &Self::header_border(lv, last_lv, last_border, width)
+                + &ro(lv != 0)
+                + "\n"),
+            Style::new().fg(BORDER_COLOR),
+        );
 
-        sb.push_str(&match &self.name {
-            Some(name) => format!(
-                "{span}{border} {title}{back_span}{right}\n",
-                span = BORDER_COLOUR.paint(span.clone()),
-                border = BORDER_COLOUR.paint("║"),
-                title = HEADER_COLOUR.bold().paint(name.to_string()),
-                back_span = rep(" ", width() - lv * 2 - name.to_string().len() as isize - 3),
-                right = BORDER_COLOUR.paint("│"),
-            ),
-            None => format!("{}", BAD_COLOUR.paint("None")),
-        });
+        let name = match &self.name {
+            Some(name) => name.to_string(),
+            None => "".to_string(),
+        };
 
-        let mut header_width = self
-            .children
-            .iter()
-            .map(|c| match c {
-                Child::Section(_) => 0,
-                Child::Attribute(attr) => attr.name.to_string().len(),
-            })
-            .max()
-            .unwrap_or(0) as isize;
-        header_width = max(10, header_width);
+        texts.append_colored_pairs(vec![
+            (&span.clone(), Some(BORDER_COLOR)),
+            ("║ ", Some(BORDER_COLOR)),
+            (&name, Some(HEADER_COLOR)),
+            (&rep(" ", width - lv * 2 - name.len() as isize - 3), None),
+            ("│\n", Some(BORDER_COLOR)),
+        ]);
 
-        let border = "╠".to_string()
-            + &rep("─", header_width + 2)
-            + "┬"
-            + &rep("─", width() - lv * 2 - header_width - 5)
-            + "╣";
-        sb.push_str(&format!(
-            "{span}{title}\n",
-            span = BORDER_COLOUR.paint(span.clone()),
-            title = BORDER_COLOUR.paint(&border)
-        ));
+        let header_width = max(
+            self.children
+                .iter()
+                .map(|c| match c {
+                    Child::Section(_) => 0,
+                    Child::Attribute(attr) => attr.name.to_string().len(),
+                })
+                .max()
+                .unwrap_or(0) as isize,
+            10,
+        );
+
+        texts.styled(
+            &(span.clone()
+                + "╠"
+                + &rep("─", header_width + 2)
+                + if self.children.len() > 0 {
+                    "┬"
+                } else {
+                    "─"
+                }
+                + &rep("─", width - lv * 2 - header_width - 5)
+                + "╣\n"),
+            Style::new().fg(BORDER_COLOR),
+        );
 
         *last_lv = lv;
 
         for child in &self.children {
-            sb.push_str(&child.print(&span, header_width, lv, last_lv, last_border));
+            texts.append(&mut child.print(&span, header_width, lv, last_lv, last_border, width));
         }
 
         if lv == 0 {
-            sb.push_str(&format!(
-                "{}",
-                BORDER_COLOUR
-                    .paint("└".to_string() + &Self::header_border(lv, last_lv, last_border) + "┘")
-            ));
+            texts.append_colored_pairs(vec![(
+                &("└".to_string() + &Self::header_border(lv, last_lv, last_border, width) + "┘"),
+                Some(BORDER_COLOR),
+            )]);
         }
-        sb
+        texts
     }
 
-    fn header_border(lv: isize, last_lv: &mut isize, last_border: &mut isize) -> String {
+    fn header_border(
+        lv: isize,
+        last_lv: &mut isize,
+        last_border: &mut isize,
+        width: isize,
+    ) -> String {
         let mut tops = vec![];
         if *last_lv > lv {
             for i in 0..(*last_lv - lv) {
@@ -223,7 +282,7 @@ impl Section {
             tops.push(*last_border - 1 - lv * 2);
         }
         let mut bar = String::new();
-        for i in 0..(max(crate::skimmer::preview_width() - lv * 2 - 2, 0) as isize) {
+        for i in 0..(max(width - lv * 2 - 2, 0) as isize) {
             bar.push_str(&m(tops.contains(&i)));
         }
         bar
@@ -244,10 +303,13 @@ impl Child {
         lv: isize,
         last_lv: &mut isize,
         last_separator: &mut isize,
-    ) -> String {
+        width: isize,
+    ) -> Texts {
         match self {
-            Child::Section(section) => section.print(lv + 1, last_lv, last_separator),
-            Child::Attribute(attribute) => attribute.print(&span, separator, lv, last_separator),
+            Child::Section(section) => section.print(lv + 1, last_lv, last_separator, width),
+            Child::Attribute(attribute) => {
+                attribute.print(&span, separator, lv, last_separator, width)
+            }
         }
     }
 }
@@ -265,7 +327,8 @@ impl Attribute {
         separator: isize,
         lv: isize,
         last_separator: &mut isize,
-    ) -> String {
+        width: isize,
+    ) -> Texts {
         let name = self.name.to_string();
         let space = " ".to_owned();
         let left_space = if separator >= name.len() as isize {
@@ -274,37 +337,41 @@ impl Attribute {
             space.clone()
         };
 
-        let mut sb = String::new();
-        let width = width() - (separator + (lv * 2) + 7) as isize;
+        let mut texts = Texts::new();
+
+        let w = width - (separator + (lv * 2) + 7) as isize;
 
         for (i, val) in self
             .value
             .chars()
             .collect::<Vec<char>>()
-            .chunks(width as usize)
+            .chunks(w as usize)
             .enumerate()
         {
             let value = val.iter().collect::<String>();
-            let right_space = rep(&space, width - value.len() as isize);
+            let right_space = rep(&space, w - value.len() as isize);
             let separator = if i == 0 { "├" } else { "│" };
 
-            sb.push_str(&format!(
-                "{span}{border} {left_space}{name} {separator} {value} {right_space}{border}\n",
-                span = BORDER_COLOUR.paint(span),
-                border = BORDER_COLOUR.paint("│"),
-                left_space = left_space,
-                name = NAME_COLOUR.paint(if i == 0 {
-                    name.clone()
-                } else {
-                    " ".repeat(name.len())
-                }),
-                separator = BORDER_COLOUR.paint(separator),
-                value = VALUE_COLOUR.paint(value),
-                right_space = BORDER_COLOUR.paint(right_space),
-            ));
+            texts.append_colored_pairs(vec![
+                (span, Some(BORDER_COLOR)),
+                ("│ ", Some(BORDER_COLOR)),
+                (&left_space, None),
+                (
+                    &(if i == 0 {
+                        name.clone()
+                    } else {
+                        " ".repeat(name.len())
+                    }),
+                    Some(NAME_COLOR),
+                ),
+                (&format!(" {} ", separator), Some(BORDER_COLOR)),
+                (&value, Some(VALUE_COLOR)),
+                (&right_space, Some(BORDER_COLOR)),
+                (" │\n", Some(BORDER_COLOR)),
+            ]);
         }
         *last_separator = lv * 2 + separator as isize + 3;
-        sb
+        texts
     }
 }
 

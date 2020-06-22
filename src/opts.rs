@@ -6,7 +6,7 @@ use rusoto_core::Region;
 use std::str::FromStr;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "hrkk")]
 pub struct Opts {
     /// Max results of aws api request. Default is max size for each api type.
@@ -113,7 +113,7 @@ impl Opts {
     }
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum SubCommand {
     /// CloudWatch.
     #[structopt(name = "cloudwatch")]
@@ -137,7 +137,7 @@ pub enum SubCommand {
     },
 
     /// RDS.
-    #[structopt(name = "ssm")]
+    #[structopt(name = "rds")]
     Rds {
         #[structopt(subcommand)]
         command: RdsCommand,
@@ -158,13 +158,13 @@ pub enum SubCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum Ec2Command {
     #[structopt(name = "instance")]
     Instance,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum LogsCommand {
     #[structopt(name = "log-group")]
     LogGroup,
@@ -175,13 +175,13 @@ pub enum LogsCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum RdsCommand {
     #[structopt(name = "db-instance")]
     DbInstance,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum SsmCommand {
     #[structopt(name = "automation-execution")]
     AutomationExecution,
@@ -194,7 +194,7 @@ pub enum SsmCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum CloudwatchCommand {
     #[structopt(name = "alarm")]
     Alarm,
@@ -202,7 +202,7 @@ pub enum CloudwatchCommand {
     AlarmHistory,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
+#[derive(StructOpt, Debug, PartialEq, Clone)]
 pub enum CacheCommand {
     /// Creates session or assume role based on provided profile type.
     #[structopt(name = "list")]

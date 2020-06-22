@@ -39,4 +39,7 @@ pub enum Error {
 
     #[error("parameter error {0}")]
     ParameterError(String),
+
+    #[error("std::io::error {0:?}")]
+    TermError(#[from] std::io::Error),
 }

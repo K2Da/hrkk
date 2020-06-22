@@ -53,38 +53,45 @@ impl AwsResource for Resource {
         (result, next_token(&yaml))
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["instance id", "name"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![Constraint::Length(22), Constraint::Min(0)]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
-            show::raw(&tag_value(&item["tag_set"], "Name")),
             show::raw(&item["instance_id"]),
+            show::raw(&tag_value(&item["tag_set"], "Name")),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .tag_name("tag_set", "Name")
             .raw("instance_id", "instance_id")
             .raw("instance_type", "instance_type")
             .raw("architecture", "architecture")
             .raw2("state", ("instance_state", "name"))
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("tags")
                     .yaml_pairs("tag_set", ("key", "value")),
             )
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("network")
                     .raw("subnet id", "subnet_id")
                     .raw("private ip address", "private_ip_address")
                     .raw2("availability zone", ("placement", "availability_zone")),
             )
             .section(
-                show::Section::new(&yaml)
+                crate::show::Section::new(&yaml)
                     .string_name("device")
                     .raw("root device type", "root_device_type")
                     .raw("root device name", "root_device_name"),
             )
-            .print_all()
     }
 }

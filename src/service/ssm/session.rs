@@ -34,7 +34,7 @@ impl AwsResource for Resource {
         None
     }
 
-    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<SkimTarget> {
+    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<ExecuteTarget> {
         if let SubCommand::Ssm {
             command: SsmCommand::Session { state },
         } = sub_command
@@ -43,7 +43,7 @@ impl AwsResource for Resource {
                 Some(text) => {
                     let text = text.to_pascal_case();
                     if text == "Active" || text == "History" {
-                        Ok(SkimTarget::ExecuteThis {
+                        Ok(ExecuteTarget::ExecuteThis {
                             parameter: Some(text),
                         })
                     } else {
@@ -56,28 +56,35 @@ impl AwsResource for Resource {
                 None => Ok(self.without_param(opts)),
             }
         } else {
-            Ok(SkimTarget::None)
+            Ok(ExecuteTarget::Null)
         }
     }
 
-    fn without_param(&self, opts: &Opts) -> SkimTarget {
+    fn without_param(&self, opts: &Opts) -> ExecuteTarget {
         if opts.cache {
-            SkimTarget::ExecuteThis { parameter: None }
+            ExecuteTarget::ExecuteThis { parameter: None }
         } else {
-            SkimTarget::ParameterFromList {
-                list: (
-                    "State".to_string(),
-                    vec![
-                        ("Active".to_string(), "active state".to_string()),
-                        ("History".to_string(), "history state".to_string()),
-                    ],
-                ),
+            ExecuteTarget::ParameterFromList {
+                option_name: "State".to_string(),
+                option_list: vec!["Active".to_string(), "History".to_string()],
             }
         }
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
         json_helper::make_vec(&yaml, "sessions")
+    }
+
+    fn header(&self) -> Vec<&'static str> {
+        vec!["id", "target", "date"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![
+            Constraint::Length(20),
+            Constraint::Length(20),
+            Constraint::Min(0),
+        ]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {
@@ -88,19 +95,18 @@ impl AwsResource for Resource {
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("session_id")
             .raw("owner", "owner")
             .raw("target", "target")
             .raw("status", "status")
             .span("date", ("start_date", "end_date"))
             .section(
-                show::Section::new(&yaml["output_url"])
+                crate::show::Section::new(&yaml["output_url"])
                     .string_name("output url")
                     .raw("cloudwatch", "cloud_watch_output_url")
                     .raw("s3", "s3_output_url"),
             )
-            .print_all()
     }
 }

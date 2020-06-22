@@ -46,12 +46,20 @@ impl AwsResource for Resource {
         (arr, next_token(&yaml))
     }
 
+    fn header(&self) -> Vec<&'static str> {
+        vec!["identifier"]
+    }
+
+    fn header_width(&self) -> Vec<Constraint> {
+        vec![Constraint::Min(0)]
+    }
+
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![show::raw(&item["db_instance_identifier"])]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
+        crate::show::Section::new(&yaml)
             .yaml_name("db_instance_identifier")
             .raw("status", "db_instance_status")
             .raw("cluster", "db_cluster_identifier")
@@ -65,6 +73,5 @@ impl AwsResource for Resource {
                 "preferred maintenance window",
                 "preferred_maintenance_window",
             )
-            .print_all()
     }
 }
