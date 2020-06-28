@@ -1,11 +1,11 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "session_id",
@@ -60,14 +60,10 @@ impl AwsResource for Resource {
         }
     }
 
-    fn without_param(&self, opts: &Opts) -> ExecuteTarget {
-        if opts.cache {
-            ExecuteTarget::ExecuteThis { parameter: None }
-        } else {
-            ExecuteTarget::ParameterFromList {
-                option_name: "State".to_string(),
-                option_list: vec!["Active".to_string(), "History".to_string()],
-            }
+    fn without_param(&self, _opts: &Opts) -> ExecuteTarget {
+        ExecuteTarget::ParameterFromList {
+            option_name: "State".to_string(),
+            option_list: vec!["Active".to_string(), "History".to_string()],
         }
     }
 
@@ -77,14 +73,6 @@ impl AwsResource for Resource {
 
     fn header(&self) -> Vec<&'static str> {
         vec!["id", "target", "date"]
-    }
-
-    fn header_width(&self) -> Vec<Constraint> {
-        vec![
-            Constraint::Length(20),
-            Constraint::Length(20),
-            Constraint::Min(0),
-        ]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {

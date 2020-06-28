@@ -1,68 +1,61 @@
+use super::SceneBase;
 use crate::error::Result;
-use crate::opts::Opts;
 use crate::service::AwsResource;
-use crate::ui::{
-    layout, select_next_scene, util,
-    util::event::{Event, Events},
-    widget, TypedTerminal, UiScene,
-};
-use termion::event::Key;
-use tokio::sync::mpsc;
+use crate::ui::UiState;
+use crate::ui::{layout, select_next_scene, widget, NextScene};
+use rustbox::keyboard::Key;
+use tui::backend::RustboxBackend;
+use tui::terminal::Frame;
 use widget::util::list;
 
-pub struct Scene {
-    opts: Opts,
-
+#[derive(Clone)]
+pub(crate) struct Scene {
+    pub(crate) base: super::SceneBase,
     resource: Box<dyn AwsResource>,
-    pub option_list: widget::list::Box,
-    tx: mpsc::Sender<Event>,
+    pub(crate) option_list: widget::TextList,
 }
 
-pub fn new(
-    opts: Opts,
+pub(crate) fn new(
+    base: SceneBase,
     resource: Box<dyn AwsResource>,
     option_name: &str,
     option_list: &Vec<String>,
-    tx: mpsc::Sender<Event>,
 ) -> Scene {
     Scene {
-        opts,
+        base,
         resource,
-        option_list: widget::list::new(option_name, option_list),
-        tx,
+        option_list: widget::text_list::new(option_name, option_list),
     }
 }
 
 impl Scene {
-    pub async fn draw(
+    pub(in crate::ui) fn handle_events(
         &mut self,
-        terminal: &mut TypedTerminal,
-        events: &mut Events,
-    ) -> Result<Option<UiScene>> {
-        if let Some(Event::Input(key)) = util::event::next(events).await {
+        ui_state: &mut UiState,
+        key: Option<rustbox::keyboard::Key>,
+    ) -> Result<NextScene> {
+        if let Some(key) = key {
             match key {
-                Key::Esc => {
-                    return Ok(Some(UiScene::Commands(crate::ui::scene::commands::new(
-                        self.opts.clone(),
-                    ))))
-                }
+                Key::Esc => return Ok(self.base.back_or_root_menu()),
 
-                Key::Char('\n') => {
-                    return Ok(Some(select_next_scene(
-                        &self.opts,
+                Key::Enter => {
+                    return Ok(NextScene::Scene(select_next_scene(
+                        self.base.history.clone(),
+                        &self.base.opts,
                         &self.option_list.selected_item(),
                         self.resource.clone(),
-                        self.tx.clone(),
+                        ui_state,
+                        self.base.tx.clone(),
                     )))
                 }
 
-                Key::Ctrl('c') => return Ok(Some(UiScene::Exit(None))),
+                Key::Ctrl('c') | Key::Char('C') => return Ok(NextScene::Exit(None)),
 
-                Key::Down => {
+                Key::Down | Key::Ctrl('j') | Key::Char('J') => {
                     list::next(&mut self.option_list.state, self.option_list.items.len());
                 }
 
-                Key::Up => {
+                Key::Up | Key::Ctrl('k') | Key::Char('K') => {
                     list::previous(&mut self.option_list.state, self.option_list.items.len())
                 }
 
@@ -72,11 +65,11 @@ impl Scene {
 
         list::select_any(&mut self.option_list.state, self.option_list.items.len());
 
-        terminal.draw(|mut f| {
-            let popup = layout::popup::layout(50, 50, f.size());
-            self.option_list.draw(&mut f, popup);
-        })?;
+        Ok(NextScene::Same)
+    }
 
-        Ok(None)
+    pub(crate) fn draw(&mut self, mut f: &mut Frame<RustboxBackend>) {
+        let popup = layout::popup::layout(50, 50, f.size());
+        self.option_list.draw(&mut f, popup);
     }
 }

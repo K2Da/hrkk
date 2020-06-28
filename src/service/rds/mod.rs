@@ -1,1 +1,1 @@
-pub mod db_instance;
+pub(crate) mod db_instance;

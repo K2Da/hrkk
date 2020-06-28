@@ -3,22 +3,22 @@ use crate::error::Result;
 use crate::opts::{Opts, SubCommand};
 use rusoto_core::signature::SignedRequest;
 use rusoto_credential::ChainProvider;
-pub use serde::Serialize;
+pub(crate) use serde::Serialize;
 use yaml_rust::Yaml;
 
-pub mod cloudwatch;
-pub mod ec2;
-pub mod file;
-pub mod json_helper;
+pub(crate) mod cloudwatch;
+pub(crate) mod ec2;
+pub(crate) mod file;
+pub(crate) mod json_helper;
 mod json_to_yaml;
-pub mod logs;
+pub(crate) mod logs;
 mod prelude;
-pub mod rds;
-pub mod ssm;
-pub mod xml_helper;
+pub(crate) mod rds;
+pub(crate) mod ssm;
+pub(crate) mod xml_helper;
 mod xml_to_yaml;
 
-pub fn all_resources() -> Vec<Box<dyn AwsResource>> {
+pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
     vec![
         Box::new(cloudwatch::alarm::new()),
         Box::new(cloudwatch::alarm_history::new()),
@@ -32,7 +32,7 @@ pub fn all_resources() -> Vec<Box<dyn AwsResource>> {
     ]
 }
 
-pub fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
+pub(crate) fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
     for r in all_resources() {
         if r.name() == name {
             return r;
@@ -42,17 +42,17 @@ pub fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
 }
 
 #[derive(Serialize)]
-pub struct Info {
+pub(crate) struct Info {
     key_attribute: &'static str,
     service_name: &'static str,
     resource_type_name: &'static str,
     api_type: ApiType,
-    pub document_url: &'static str,
-    pub max_limit: i64,
+    pub(crate) document_url: &'static str,
+    pub(crate) max_limit: i64,
 }
 
 #[derive(Serialize, Clone)]
-pub enum ApiType {
+pub(crate) enum ApiType {
     Xml {
         service_name: &'static str,
         action: &'static str,
@@ -76,7 +76,7 @@ impl Clone for Box<dyn AwsResource> {
     }
 }
 
-pub trait AwsResource: Send + Sync {
+pub(crate) trait AwsResource: Send + Sync {
     fn info(&self) -> &Info;
 
     fn matching_sub_command(&self) -> Option<SubCommand>;
@@ -101,8 +101,6 @@ pub trait AwsResource: Send + Sync {
     fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>);
 
     fn header(&self) -> Vec<&'static str>;
-
-    fn header_width(&self) -> Vec<tui::layout::Constraint>;
 
     fn line(&self, yaml: &Yaml) -> Vec<String>;
 
@@ -131,6 +129,10 @@ pub trait AwsResource: Send + Sync {
         self.info().resource_type_name.to_owned()
     }
 
+    fn resource_full_name(&self) -> String {
+        format!("{}:{}", self.service_name(), self.resource_type_name())
+    }
+
     fn command_name(&self) -> String {
         self.resource_type_name().replace("_", "-")
     }
@@ -144,7 +146,7 @@ pub trait AwsResource: Send + Sync {
     }
 }
 
-pub enum ExecuteTarget {
+pub(crate) enum ExecuteTarget {
     ExecuteThis {
         parameter: Option<String>,
     },
@@ -158,7 +160,7 @@ pub enum ExecuteTarget {
     Null,
 }
 
-pub async fn execute_command(sub_command: &SubCommand, opts: Opts) -> Result<()> {
+pub(crate) async fn execute_command(sub_command: &SubCommand, opts: Opts) -> Result<()> {
     use ExecuteTarget::*;
     for resource in all_resources() {
         match resource.take_command(sub_command, &opts.clone()) {
@@ -175,7 +177,7 @@ pub async fn execute_command(sub_command: &SubCommand, opts: Opts) -> Result<()>
     Ok(())
 }
 
-pub fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
+pub(crate) fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     if let Yaml::Array(array) = tags {
         for tag in array {
             if Yaml::String(name.to_string()) == tag["key"] {
@@ -186,25 +188,14 @@ pub fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     &Yaml::BadValue
 }
 
-pub fn next_token(yaml: &Yaml) -> Option<String> {
+pub(crate) fn next_token(yaml: &Yaml) -> Option<String> {
     match &yaml["next_token"] {
         Yaml::String(token) => Some(token.to_owned()),
         _ => None,
     }
 }
 
-#[allow(dead_code)]
-fn print_selected_items(opts: &Opts, selected_items: &Vec<String>) {
-    for (i, item) in selected_items.iter().enumerate() {
-        if 0 == i {
-            print!("{}", item);
-        } else {
-            print!("{}{}", opts.delimiter(), item);
-        }
-    }
-}
-
-pub async fn fetch(
+pub(crate) async fn fetch(
     resource: &dyn AwsResource,
     parameter: &Option<String>,
     opts: &Opts,
@@ -243,44 +234,6 @@ pub async fn fetch(
     } else {
         Err(RusotoError("response body is empty.".to_string()))
     }
-}
-
-#[allow(dead_code)]
-fn export_selected_items(
-    resource: &dyn AwsResource,
-    yaml_list: &Vec<Yaml>,
-    selected_items: &Vec<String>,
-) -> Result<()> {
-    for (i, item_name) in selected_items.iter().enumerate() {
-        for yaml in yaml_list {
-            if resource.equal(yaml, item_name) {
-                file::store_yaml(
-                    yaml,
-                    &format!(
-                        "{}-{}-{}",
-                        resource.command_name(),
-                        resource.resource_type_name(),
-                        i + 1
-                    ),
-                )?;
-            }
-        }
-    }
-    Ok(())
-}
-
-#[allow(dead_code)]
-fn read_yaml(resource: &dyn AwsResource) -> Vec<Yaml> {
-    let mut yaml_list: Vec<Yaml> = vec![];
-    match file::restore_yaml(resource) {
-        Some(arr) => {
-            for yaml in &arr {
-                yaml_list.push(yaml.clone());
-            }
-        }
-        None => (),
-    }
-    yaml_list
 }
 
 fn request(

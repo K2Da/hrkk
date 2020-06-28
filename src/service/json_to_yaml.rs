@@ -4,11 +4,11 @@ use linked_hash_map::LinkedHashMap;
 use serde_json::{from_reader, Value};
 use yaml_rust::Yaml;
 
-pub fn convert(source: &[u8]) -> Result<Yaml> {
+pub(crate) fn convert(source: &[u8]) -> Result<Yaml> {
     Ok(to_yaml(from_reader(source)?))
 }
 
-pub fn to_yaml(json: Value) -> Yaml {
+pub(crate) fn to_yaml(json: Value) -> Yaml {
     match json {
         Value::String(string) => Yaml::String(string),
         Value::Bool(bool) => Yaml::Boolean(bool),

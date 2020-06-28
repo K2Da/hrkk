@@ -1,127 +1,275 @@
 mod layout;
+use tui::backend::RustboxBackend;
+mod key_handler;
 mod scene;
 mod util;
-mod widget;
+pub mod widget;
 
 use crate::opts::Opts;
 use crate::service::AwsResource;
+use crate::ui::scene::SceneBase;
 use crate::ui::util::event::{Event, Events};
-use std::io;
-use termion::{raw::RawTerminal, screen::AlternateScreen};
+use rustbox::keyboard::Key;
+use std::time::Duration;
 use tokio::sync::mpsc;
-use tui::{backend::TermionBackend, Terminal};
+use tui::Frame;
+use tui::Terminal;
 
 use crate::error::Result;
 
-pub type TypedTerminal = Terminal<TermionBackend<AlternateScreen<RawTerminal<io::Stdout>>>>;
+pub(crate) type TypedTerminal = Terminal<RustboxBackend>;
 
-async fn draw(
-    scene: &mut UiScene,
-    terminal: &mut TypedTerminal,
-    events: &mut Events,
-) -> Result<Option<UiScene>> {
-    match scene {
-        UiScene::Commands(scene) => scene.draw(terminal, events).await,
-        UiScene::Resource(scene) => scene.draw(terminal, events).await,
-        UiScene::OptionPopup(scene) => scene.draw(terminal, events).await,
-        UiScene::Exit(_) => Ok(None),
-    }
-}
-
-pub enum UiScene {
-    Commands(scene::commands::Scene),
-    Resource(scene::resources::Scene),
-    OptionPopup(scene::list_option::Scene),
+pub(crate) enum NextScene {
+    Scene(UiScene),
+    Same,
     Exit(Option<String>),
 }
 
+#[derive(Clone)]
+pub(crate) enum UiScene {
+    Commands(scene::commands::Scene),
+    Resource(scene::resources::Scene),
+    OptionPopup(scene::list_option::Scene),
+    TextPopup(scene::text_popup::Scene),
+    SectionPopup(scene::section_popup::Scene),
+}
+
+use UiScene::*;
 impl UiScene {
-    pub fn set_exit_key(&self, events: &mut Events) {
+    pub(crate) fn status(&self, current: bool) -> crate::show::Texts {
         match self {
-            UiScene::Commands(_) => events.set_exit_key(false, true),
-            UiScene::Resource(scene) => scene.set_exit_key(events),
-            UiScene::OptionPopup(_) => events.set_exit_key(false, false),
-            UiScene::Exit(_) => (),
+            Commands(scene) => scene.status(current),
+            Resource(scene) => scene.status(current),
+            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!(),
+        }
+    }
+
+    pub(crate) fn overlay(&mut self, other: UiScene) {
+        match self {
+            Commands(scene) => scene.overlay(other),
+            Resource(scene) => scene.overlay(other),
+            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!(),
+        }
+    }
+
+    pub(in crate::ui) fn draw(
+        &mut self,
+        ui_state: &mut UiState,
+        mut f: &mut Frame<RustboxBackend>,
+    ) {
+        match self {
+            Commands(scene) => scene.draw(ui_state, &mut f),
+            Resource(scene) => scene.draw(ui_state, &mut f),
+            OptionPopup(scene) => scene.draw(&mut f),
+            TextPopup(scene) => scene.draw(&mut f),
+            SectionPopup(scene) => scene.draw(ui_state, &mut f),
+        }
+    }
+
+    pub(in crate::ui) fn handle_events(
+        &mut self,
+        ui_state: &mut UiState,
+        events: &mut Events,
+        key: Option<Key>,
+    ) -> Result<NextScene> {
+        match self {
+            Commands(scene) => Ok(scene.handle_events(ui_state, events, key)?),
+            Resource(scene) => Ok(scene.handle_events(ui_state, events, key)?),
+            OptionPopup(scene) => Ok(scene.handle_events(ui_state, key)?),
+            TextPopup(scene) => Ok(scene.handle_events(key)),
+            SectionPopup(scene) => Ok(scene.handle_events(key)),
+        }
+    }
+
+    fn take_should_draw(&mut self) -> bool {
+        let base = self.base_mut();
+        let should_draw = base.should_draw;
+        base.should_draw = false;
+        should_draw
+    }
+
+    fn set_should_draw(&mut self) {
+        let base = self.base_mut();
+        base.should_draw = true;
+    }
+
+    fn base_mut(&mut self) -> &mut SceneBase {
+        match self {
+            Commands(scene) => &mut scene.base,
+            Resource(scene) => &mut scene.base,
+            OptionPopup(scene) => &mut scene.base,
+            TextPopup(scene) => &mut scene.base,
+            SectionPopup(scene) => &mut scene.base,
         }
     }
 }
 
-pub fn select_next_scene(
+pub(in crate::ui) fn select_next_scene(
+    current_scene: Option<Box<UiScene>>,
     opts: &Opts,
     parameter: &Option<String>,
     resource: Box<dyn AwsResource>,
+    ui_state: &mut UiState,
     tx: mpsc::Sender<Event>,
 ) -> UiScene {
     use crate::service::ExecuteTarget;
 
     match parameter {
         Some(parameter) => UiScene::Resource(scene::resources::new(
+            SceneBase::with_history(opts.clone(), tx, current_scene),
             Some(parameter.to_string()),
-            opts.clone(),
             resource,
             None,
-            tx,
+            ui_state,
         )),
-        None => {
-            match resource.without_param(opts) {
-                ExecuteTarget::ExecuteThis { parameter } => UiScene::Resource(
-                    scene::resources::new(parameter, opts.clone(), resource, None, tx),
-                ),
-                ExecuteTarget::ParameterFromList {
-                    option_name,
-                    option_list,
-                } => UiScene::OptionPopup(scene::list_option::new(
-                    opts.clone(),
+        None => match resource.without_param(opts) {
+            ExecuteTarget::ExecuteThis { parameter } => UiScene::Resource(scene::resources::new(
+                SceneBase::with_history(opts.clone(), tx, current_scene),
+                parameter,
+                resource,
+                None,
+                ui_state,
+            )),
+            ExecuteTarget::ParameterFromList {
+                option_name,
+                option_list,
+            } => {
+                let option = scene::list_option::new(
+                    SceneBase::with_history(opts.clone(), tx, current_scene.clone()),
                     resource.clone(),
                     &option_name,
                     &option_list,
-                    tx,
-                )),
-                ExecuteTarget::ParameterFromResource { param_resource } => UiScene::Resource(
-                    scene::resources::new(None, opts.clone(), param_resource, Some(resource), tx),
-                ),
-                ExecuteTarget::Null => panic!(),
+                );
+
+                match current_scene {
+                    Some(mut scene) => {
+                        scene.overlay(UiScene::OptionPopup(option));
+                        *scene
+                    }
+                    None => UiScene::OptionPopup(option),
+                }
             }
-        }
+            ExecuteTarget::ParameterFromResource { param_resource } => {
+                UiScene::Resource(scene::resources::new(
+                    SceneBase::with_history(opts.clone(), tx, current_scene),
+                    None,
+                    param_resource,
+                    Some(resource),
+                    ui_state,
+                ))
+            }
+            ExecuteTarget::Null => panic!(),
+        },
     }
 }
 
-pub async fn tui(
+#[derive(Clone, Debug)]
+pub(crate) enum ViewerMode {
+    Yaml,
+    Summary,
+}
+
+struct UiState {
+    viewer_mode: ViewerMode,
+    logs: crate::log::Logs,
+    pub(in crate::ui) api_count: usize,
+}
+
+impl UiState {
+    pub fn new() -> Self {
+        UiState {
+            viewer_mode: ViewerMode::Summary,
+            logs: crate::log::Logs::new(),
+            api_count: 0,
+        }
+    }
+
+    pub fn toggle_viewer_mode(&mut self) {
+        self.viewer_mode = match self.viewer_mode {
+            ViewerMode::Yaml => ViewerMode::Summary,
+            ViewerMode::Summary => ViewerMode::Yaml,
+        }
+    }
+
+    pub fn api_count_up(&mut self) {
+        self.api_count += 1;
+    }
+}
+
+pub(crate) async fn tui(
     opts: Opts,
     parameter: Option<String>,
     resource: Option<Box<dyn AwsResource>>,
 ) -> Result<()> {
     let mut terminal = util::terminal()?;
     let mut events = util::event::new();
+    let mut ui_state = UiState::new();
+
     let mut scene = match resource {
-        Some(resource) => select_next_scene(&opts, &parameter, resource, events.tx.clone()),
-        None => UiScene::Commands(scene::commands::new(opts.clone())),
+        Some(resource) => select_next_scene(
+            None,
+            &opts,
+            &parameter,
+            resource,
+            &mut ui_state,
+            events.tx.clone(),
+        ),
+        None => UiScene::Commands(scene::commands::new(SceneBase::minimum(
+            opts.clone(),
+            events.tx.clone(),
+        ))),
     };
-    scene.set_exit_key(&mut events);
 
     let output_text;
+    let mut key = None;
 
     loop {
-        match draw(&mut scene, &mut terminal, &mut events).await? {
-            Some(next_scene) => match next_scene {
-                UiScene::Exit(ouput) => {
-                    output_text = ouput;
-                    break;
-                }
-                _ => {
-                    scene = next_scene;
-                    scene.set_exit_key(&mut events);
-                }
-            },
-            None => (),
+        match scene.handle_events(&mut ui_state, &mut events, key)? {
+            NextScene::Same => (),
+            NextScene::Scene(next_scene) => scene = next_scene,
+            NextScene::Exit(output) => {
+                output_text = output;
+                break;
+            }
         }
+
+        if scene.take_should_draw() {
+            terminal.draw(|mut f| scene.draw(&mut ui_state, &mut f))?;
+        }
+
+        key = peek_event(&mut terminal, &mut scene);
     }
 
-    drop(events);
     drop(terminal);
 
     if let Some(text) = output_text {
-        println!("{}", text);
+        print!("{}", text);
     }
+
     Ok(())
+}
+
+fn peek_event(terminal: &mut Terminal<RustboxBackend>, scene: &mut UiScene) -> Option<Key> {
+    loop {
+        match terminal
+            .backend()
+            .rustbox()
+            .peek_event(Duration::from_millis(100), false)
+        {
+            Ok(rustbox::Event::KeyEvent(event_key)) => {
+                scene.set_should_draw();
+                return Some(event_key);
+            }
+
+            Ok(rustbox::Event::ResizeEvent(_, _)) => {
+                let _ = terminal.draw(|mut _f| ());
+                scene.set_should_draw();
+                continue;
+            }
+
+            _ => {
+                return None;
+            }
+        }
+    }
 }

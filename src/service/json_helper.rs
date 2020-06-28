@@ -2,7 +2,7 @@ use crate::error::Error::*;
 use crate::service::prelude::*;
 use serde_json::Value;
 
-pub fn request(
+pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
     parameter: &Option<String>,
@@ -20,10 +20,11 @@ pub fn request(
         if let Value::Object(map) = json {
             let mut map = map.clone();
 
-            let limit = opts.limit.unwrap_or(resource.info().max_limit);
             map.insert(
                 limit_name.to_string(),
-                Value::Number(serde_json::Number::from_f64(limit as f64).unwrap()),
+                Value::Number(
+                    serde_json::Number::from_f64(resource.info().max_limit as f64).unwrap(),
+                ),
             );
 
             if let Some(next_token) = next_token {
@@ -54,7 +55,7 @@ pub fn request(
     }
 }
 
-pub fn make_vec(yaml: &Yaml, root: &str) -> (Vec<Yaml>, Option<String>) {
+pub(crate) fn make_vec(yaml: &Yaml, root: &str) -> (Vec<Yaml>, Option<String>) {
     if let Yaml::Array(groups) = &yaml[root] {
         return (groups.clone(), next_token(&yaml));
     }

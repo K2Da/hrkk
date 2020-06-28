@@ -1,4 +1,3 @@
-use crate::service::file::{path_str, store_resource_file_path};
 use crate::service::AwsResource;
 use crate::show;
 use crate::ui::widget::util::table;
@@ -6,13 +5,13 @@ use tui::widgets::TableState;
 use tui::{
     backend::Backend,
     layout::{Constraint, Rect},
-    style::{Color, Style},
+    style::Style,
     terminal::Frame,
     widgets::{Row, Table},
 };
 
 #[derive(Clone)]
-pub struct Item {
+pub(crate) struct Item {
     row: Vec<String>,
     match_string: String,
     command: Box<dyn AwsResource>,
@@ -24,14 +23,16 @@ impl table::Matchable for Item {
     }
 }
 
-pub struct Selector {
-    pub state: TableState,
+#[derive(Clone)]
+pub(crate) struct Commands {
+    pub(crate) state: TableState,
     items: Vec<Item>,
-    pub header: Vec<String>,
+    pub(crate) header: Vec<String>,
     filtered_indexes: Vec<usize>,
+    pub(crate) last_height: u16,
 }
 
-pub fn new() -> Selector {
+pub(crate) fn new() -> Commands {
     let mut items = vec![];
     let resources = crate::service::all_resources();
     for resource in resources {
@@ -42,34 +43,36 @@ pub fn new() -> Selector {
         });
     }
 
-    let mut s = Selector {
+    let mut s = Commands {
         state: TableState::default(),
         header: vec!["".to_string(), "".to_string()],
         items,
         filtered_indexes: vec![],
+        last_height: 0,
     };
 
     s.filter("");
     s
 }
 
-impl Selector {
-    pub fn filter(&mut self, search_text: &str) {
+impl Commands {
+    pub(crate) fn filter(&mut self, search_text: &str) {
         self.filtered_indexes = table::filter(search_text, &mut self.items, &mut self.state);
     }
 
-    pub fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect)
+    pub(crate) fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect)
     where
         B: Backend,
     {
         let filtered_items = table::filtered_items(&self.items, &self.filtered_indexes);
+        self.last_height = area.height;
 
         let widget = table::style(
             Table::new(
                 self.header.iter(),
-                filtered_items.iter().map(|(_, item)| {
-                    Row::StyledData(item.row.iter(), Style::default().fg(Color::White))
-                }),
+                filtered_items
+                    .iter()
+                    .map(|(_, item)| Row::StyledData(item.row.iter(), Style::default())),
             ),
             " command list ",
             &[Constraint::Length(20), Constraint::Min(10)],
@@ -78,7 +81,7 @@ impl Selector {
         f.render_stateful_widget(widget, area, &mut self.state);
     }
 
-    pub fn selected_resource(&self) -> Option<Box<dyn AwsResource>> {
+    pub(crate) fn selected_resource(&self) -> Option<Box<dyn AwsResource>> {
         if let Some(index) = self.state.selected() {
             return Some(crate::service::resource_by_name(
                 &self.items[self.filtered_indexes[index]].command.name(),
@@ -87,7 +90,7 @@ impl Selector {
         None
     }
 
-    pub fn command_detail(&self) -> show::Section {
+    pub(crate) fn command_detail(&self) -> show::Section {
         match self.state.selected() {
             Some(index) => {
                 let item = &self.items[self.filtered_indexes[index]];
@@ -99,10 +102,6 @@ impl Selector {
                     ))
                     .str("document", &item.command.info().document_url)
                     .str(
-                        "cache path",
-                        &path_str(&store_resource_file_path(&*item.command)),
-                    )
-                    .str(
                         "result limit",
                         &format!("{}", &item.command.info().max_limit),
                     )
@@ -111,7 +110,7 @@ impl Selector {
         }
     }
 
-    pub fn filtered_len(&self) -> usize {
+    pub(crate) fn filtered_len(&self) -> usize {
         self.filtered_indexes.len()
     }
 }

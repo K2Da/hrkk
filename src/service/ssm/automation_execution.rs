@@ -1,11 +1,11 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "AutomationExecutionId",
@@ -45,15 +45,6 @@ impl AwsResource for Resource {
         vec!["status", "name", "time", "end at"]
     }
 
-    fn header_width(&self) -> Vec<Constraint> {
-        vec![
-            Constraint::Length(10),
-            Constraint::Min(22),
-            Constraint::Length(8),
-            Constraint::Length(18),
-        ]
-    }
-
     fn line(&self, item: &Yaml) -> Vec<String> {
         vec![
             show::raw(&item["automation_execution_status"]),
@@ -67,10 +58,11 @@ impl AwsResource for Resource {
         crate::show::Section::new(&yaml)
             .yaml_name("automation_execution_id")
             .raw("status", "automation_execution_status")
-            .span(
+            .duration(
                 "execution time",
                 ("execution_start_time", "execution_end_time"),
             )
+            .span("from to", ("execution_start_time", "execution_end_time"))
             .raw("type", "automation_type")
             .raw("document", "document_name")
             .raw("document version", "document_version")

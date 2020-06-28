@@ -1,7 +1,7 @@
 use crate::service::prelude::*;
 use rusoto_core::param::{Params, ServiceParams};
 
-pub fn request(
+pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
     resource: &dyn AwsResource,
@@ -20,8 +20,7 @@ pub fn request(
         params.put("Action", action);
         params.put("Version", version);
 
-        let limit = opts.limit.unwrap_or(resource.info().max_limit);
-        params.put(limit_name, limit);
+        params.put(limit_name, resource.info().max_limit);
 
         if let Some(next_token) = next_token {
             params.put("NextToken", next_token);

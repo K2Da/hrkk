@@ -1,11 +1,11 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "db_instance_identifier",
@@ -47,15 +47,14 @@ impl AwsResource for Resource {
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["identifier"]
-    }
-
-    fn header_width(&self) -> Vec<Constraint> {
-        vec![Constraint::Min(0)]
+        vec!["status", "identifier"]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {
-        vec![show::raw(&item["db_instance_identifier"])]
+        vec![
+            show::raw(&item["db_instance_status"]),
+            show::raw(&item["db_instance_identifier"]),
+        ]
     }
 
     fn detail(&self, yaml: &Yaml) -> crate::show::Section {

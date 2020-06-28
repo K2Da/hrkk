@@ -1,2 +1,2 @@
-pub mod list;
-pub mod table;
+pub(crate) mod list;
+pub(crate) mod table;

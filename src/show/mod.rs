@@ -1,34 +1,63 @@
+use crate::color;
 use std::cmp::max;
+use tui::style::Color;
 use tui::style::Style;
+use tui::widgets::Text;
 use yaml_rust::Yaml;
 
-pub enum Txt {
+mod yaml_print;
+
+#[derive(Clone)]
+pub(crate) enum Txt {
     Raw(String),
     Styled(String, Style),
 }
 
 impl Txt {
-    pub fn raw(data: &str) -> Self {
+    pub(crate) fn raw(data: &str) -> Self {
         Txt::Raw(data.to_string())
     }
 
-    pub fn styled(data: &str, style: Style) -> Txt {
+    pub(crate) fn colored(data: &str, color: Color) -> Self {
+        Txt::Styled(data.to_string(), Style::default().fg(color))
+    }
+
+    pub(crate) fn styled(data: &str, style: Style) -> Self {
         Txt::Styled(data.to_string(), style)
     }
 }
 
-pub struct Texts(pub Vec<Txt>);
+#[derive(Clone)]
+pub(crate) struct Texts(pub(crate) Vec<Txt>);
 
 impl Texts {
-    pub fn new() -> Self {
+    pub(crate) fn to_tui_texts(&self) -> (Vec<Text>, u16) {
+        let mut text = vec![];
+        let mut line_len = 0;
+        for t in &self.0 {
+            match t {
+                Txt::Raw(str) => {
+                    line_len += str.match_indices("\n").count() as u16;
+                    text.push(Text::raw(str))
+                }
+                Txt::Styled(str, style) => {
+                    line_len += str.match_indices("\n").count() as u16;
+                    text.push(Text::styled(str, style.clone()))
+                }
+            }
+        }
+        (text, line_len)
+    }
+
+    pub(crate) fn new() -> Self {
         Self(vec![])
     }
 
-    pub fn append(&mut self, other: &mut Texts) {
+    pub(crate) fn append(&mut self, other: &mut Texts) {
         self.0.append(&mut other.0);
     }
 
-    pub fn append_colored_pairs(&mut self, pairs: Vec<(&str, Option<Color>)>) {
+    pub(crate) fn append_colored_pairs(&mut self, pairs: Vec<(&str, Option<Color>)>) {
         for pair in &pairs {
             match pair {
                 (data, Some(color)) => self.styled(data, Style::new().fg(*color)),
@@ -37,30 +66,24 @@ impl Texts {
         }
     }
 
-    pub fn raw(&mut self, data: &str) {
+    pub(crate) fn raw(&mut self, data: &str) {
         self.0.push(Txt::raw(data));
     }
 
-    pub fn styled(&mut self, data: &str, style: Style) {
+    pub(crate) fn styled(&mut self, data: &str, style: Style) {
         self.0.push(Txt::styled(data, style));
     }
 }
 
-use tui::style::Color;
-const BORDER_COLOR: Color = Color::White;
-const HEADER_COLOR: Color = Color::Yellow;
-const NAME_COLOR: Color = Color::Cyan;
-const VALUE_COLOR: Color = Color::White;
-
 #[derive(Debug, Clone)]
-pub struct Section {
+pub(crate) struct Section {
     yaml: Yaml,
     name: Option<Name>,
     children: Vec<Child>,
 }
 
 impl Section {
-    pub fn new(yaml: &Yaml) -> Self {
+    pub(crate) fn new(yaml: &Yaml) -> Self {
         Self {
             yaml: yaml.clone(),
             name: None,
@@ -68,7 +91,7 @@ impl Section {
         }
     }
 
-    pub fn new_without_yaml() -> Self {
+    pub(crate) fn new_without_yaml() -> Self {
         Self {
             yaml: Yaml::BadValue,
             name: None,
@@ -76,53 +99,53 @@ impl Section {
         }
     }
 
-    pub fn tag_name(mut self, tag: &str, key: &str) -> Self {
+    pub(crate) fn tag_name(mut self, tag: &str, key: &str) -> Self {
         self.name = Some(Name::Yaml(
             crate::service::tag_value(&self.yaml[tag], key).clone(),
         ));
         self
     }
 
-    pub fn yaml_name(mut self, key: &str) -> Self {
+    pub(crate) fn yaml_name(mut self, key: &str) -> Self {
         self.name = Some(Name::Yaml(self.yaml[key].clone()));
         self
     }
 
-    pub fn string_name(mut self, name: &str) -> Self {
+    pub(crate) fn string_name(mut self, name: &str) -> Self {
         self.name = Some(Name::String(name.to_string()));
         self
     }
 
-    pub fn span(self, name: &str, span: (&str, &str)) -> Self {
+    pub(crate) fn span(self, name: &str, span: (&str, &str)) -> Self {
         let span = self::span(&self.yaml[span.0], &self.yaml[span.1]);
         self.child(name, &span)
     }
 
-    pub fn duration(self, name: &str, duration: (&str, &str)) -> Self {
+    pub(crate) fn duration(self, name: &str, duration: (&str, &str)) -> Self {
         let duration = self::duration(&self.yaml[duration.0], &self.yaml[duration.1]);
         self.child(name, &duration)
     }
 
-    pub fn raw(self, name: &str, key: &str) -> Self {
+    pub(crate) fn raw(self, name: &str, key: &str) -> Self {
         let raw = self::raw(&self.yaml[key]);
         self.child(name, &raw)
     }
 
-    pub fn raw2(self, name: &str, key: (&str, &str)) -> Self {
+    pub(crate) fn raw2(self, name: &str, key: (&str, &str)) -> Self {
         let raw2 = self::raw(&self.yaml[key.0][key.1]);
         self.child(name, &raw2)
     }
 
-    pub fn str(self, name: &str, val: &str) -> Self {
+    pub(crate) fn str(self, name: &str, val: &str) -> Self {
         self.child(name, val)
     }
 
-    pub fn time(self, name: &str, key: &str) -> Self {
+    pub(crate) fn time(self, name: &str, key: &str) -> Self {
         let time = self::time(&self.yaml[key]);
         self.child(name, &time)
     }
 
-    pub fn byte(self, name: &str, key: &str) -> Self {
+    pub(crate) fn byte(self, name: &str, key: &str) -> Self {
         let byte = self::byte(&self.yaml[key]);
         self.child(name, &byte)
     }
@@ -135,7 +158,7 @@ impl Section {
         self
     }
 
-    pub fn yaml_pairs(mut self, root: &str, key_value: (&str, &str)) -> Self {
+    pub(crate) fn yaml_pairs(mut self, root: &str, key_value: (&str, &str)) -> Self {
         match &self.yaml[root] {
             Yaml::Array(array) => {
                 for y in array {
@@ -151,7 +174,7 @@ impl Section {
         self
     }
 
-    pub fn raw_array(mut self, root: &str) -> Self {
+    pub(crate) fn raw_array(mut self, root: &str) -> Self {
         match &self.yaml[root] {
             Yaml::Array(array) => {
                 for y in array {
@@ -166,7 +189,7 @@ impl Section {
         self
     }
 
-    pub fn string_attributes(mut self, attrs: Vec<(String, String)>) -> Self {
+    pub(crate) fn string_attributes(mut self, attrs: Vec<(String, String)>) -> Self {
         for (name, value) in attrs {
             self.children.push(Child::Attribute(Attribute {
                 name: Name::String(name.to_owned()),
@@ -176,18 +199,22 @@ impl Section {
         self
     }
 
-    pub fn section(mut self, section: Section) -> Self {
+    pub(crate) fn section(mut self, section: Section) -> Self {
         self.children.push(Child::Section(section.clone()));
         self
     }
 
-    pub fn print_all(&self, width: isize) -> Texts {
+    pub(crate) fn print_summary(&self, width: isize) -> Texts {
+        if self.children.len() == 0 {
+            return Texts(vec![]);
+        }
+
         let mut last_lv = 0;
         let mut last_border = 0;
         self.print(0, &mut last_lv, &mut last_border, width)
     }
 
-    pub fn print(
+    pub(crate) fn print(
         &self,
         lv: isize,
         last_lv: &mut isize,
@@ -202,13 +229,12 @@ impl Section {
             "".to_string()
         };
 
-        texts.styled(
+        texts.raw(
             &(span.clone()
                 + &lo(lv != 0 && lv <= *last_lv)
                 + &Self::header_border(lv, last_lv, last_border, width)
                 + &ro(lv != 0)
                 + "\n"),
-            Style::new().fg(BORDER_COLOR),
         );
 
         let name = match &self.name {
@@ -217,11 +243,11 @@ impl Section {
         };
 
         texts.append_colored_pairs(vec![
-            (&span.clone(), Some(BORDER_COLOR)),
-            ("║ ", Some(BORDER_COLOR)),
-            (&name, Some(HEADER_COLOR)),
+            (&span.clone(), None),
+            ("║ ", None),
+            (&name, Some(color::HIGHLIGHT)),
             (&rep(" ", width - lv * 2 - name.len() as isize - 3), None),
-            ("│\n", Some(BORDER_COLOR)),
+            ("│\n", None),
         ]);
 
         let header_width = max(
@@ -236,7 +262,7 @@ impl Section {
             10,
         );
 
-        texts.styled(
+        texts.raw(
             &(span.clone()
                 + "╠"
                 + &rep("─", header_width + 2)
@@ -247,7 +273,6 @@ impl Section {
                 }
                 + &rep("─", width - lv * 2 - header_width - 5)
                 + "╣\n"),
-            Style::new().fg(BORDER_COLOR),
         );
 
         *last_lv = lv;
@@ -259,7 +284,7 @@ impl Section {
         if lv == 0 {
             texts.append_colored_pairs(vec![(
                 &("└".to_string() + &Self::header_border(lv, last_lv, last_border, width) + "┘"),
-                Some(BORDER_COLOR),
+                None,
             )]);
         }
         texts
@@ -287,16 +312,27 @@ impl Section {
         }
         bar
     }
+
+    pub(crate) fn print_all_yaml(&self, width: isize) -> Texts {
+        if self.yaml == Yaml::BadValue {
+            return Texts(vec![]);
+        }
+
+        let span = "│ ".to_string();
+        let mut yaml_texts = yaml_print::YamlTexts::new(width);
+        yaml_print::print_with_border(&mut yaml_texts, &self.yaml, &span);
+        Texts(yaml_texts.texts)
+    }
 }
 
 #[derive(Debug, Clone)]
-pub enum Child {
+pub(crate) enum Child {
     Section(Section),
     Attribute(Attribute),
 }
 
 impl Child {
-    pub fn print(
+    pub(crate) fn print(
         &self,
         span: &str,
         separator: isize,
@@ -315,13 +351,13 @@ impl Child {
 }
 
 #[derive(Debug, Clone)]
-pub struct Attribute {
+pub(crate) struct Attribute {
     name: Name,
     value: String,
 }
 
 impl Attribute {
-    pub fn print(
+    pub(crate) fn print(
         &self,
         span: &str,
         separator: isize,
@@ -353,8 +389,8 @@ impl Attribute {
             let separator = if i == 0 { "├" } else { "│" };
 
             texts.append_colored_pairs(vec![
-                (span, Some(BORDER_COLOR)),
-                ("│ ", Some(BORDER_COLOR)),
+                (span, None),
+                ("│ ", None),
                 (&left_space, None),
                 (
                     &(if i == 0 {
@@ -362,12 +398,12 @@ impl Attribute {
                     } else {
                         " ".repeat(name.len())
                     }),
-                    Some(NAME_COLOR),
+                    None,
                 ),
-                (&format!(" {} ", separator), Some(BORDER_COLOR)),
-                (&value, Some(VALUE_COLOR)),
-                (&right_space, Some(BORDER_COLOR)),
-                (" │\n", Some(BORDER_COLOR)),
+                (&format!(" {} ", separator), None),
+                (&value, None),
+                (&right_space, None),
+                (" │\n", None),
             ]);
         }
         *last_separator = lv * 2 + separator as isize + 3;
@@ -375,7 +411,7 @@ impl Attribute {
     }
 }
 
-pub fn raw(yaml: &Yaml) -> String {
+pub(crate) fn raw(yaml: &Yaml) -> String {
     match yaml {
         Yaml::String(string) => string.clone(),
         Yaml::Integer(int) => format!("{}", int),
@@ -383,7 +419,7 @@ pub fn raw(yaml: &Yaml) -> String {
     }
 }
 
-pub fn byte(yaml: &Yaml) -> String {
+pub(crate) fn byte(yaml: &Yaml) -> String {
     match yaml {
         Yaml::Integer(byte) => {
             if *byte < 1024 {
@@ -400,7 +436,7 @@ pub fn byte(yaml: &Yaml) -> String {
     }
 }
 
-pub fn span(from: &Yaml, to: &Yaml) -> String {
+pub(crate) fn span(from: &Yaml, to: &Yaml) -> String {
     let time_from = to_datetime(from);
     let time_to = to_datetime(to);
 
@@ -419,7 +455,7 @@ pub fn span(from: &Yaml, to: &Yaml) -> String {
     format!("{} to {}{}", time(from), str_to, duration)
 }
 
-pub fn duration(from: &Yaml, to: &Yaml) -> String {
+pub(crate) fn duration(from: &Yaml, to: &Yaml) -> String {
     get_duration(from, to).unwrap_or("-".to_string())
 }
 
@@ -443,7 +479,7 @@ fn get_duration(from: &Yaml, to: &Yaml) -> Option<String> {
     None
 }
 
-pub fn time(yaml: &Yaml) -> String {
+pub(crate) fn time(yaml: &Yaml) -> String {
     match to_datetime(yaml) {
         Some(dt) => trimmed_time(dt, Local::now()),
         None => "-".to_string(),
@@ -482,7 +518,7 @@ fn to_datetime(yaml: &Yaml) -> Option<DateTime<Local>> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Name {
+pub(crate) enum Name {
     Yaml(Yaml),
     String(String),
 }
@@ -514,6 +550,6 @@ fn m(line: bool) -> String {
     if line { "┴" } else { "─" }.to_owned()
 }
 
-pub fn rep(s: &str, n: isize) -> String {
+pub(crate) fn rep(s: &str, n: isize) -> String {
     s.repeat(max(n, 0) as usize)
 }

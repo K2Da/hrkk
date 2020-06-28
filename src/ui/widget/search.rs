@@ -5,14 +5,15 @@ use tui::{
     widgets::{Block, Borders, Paragraph, Text},
 };
 
-pub struct TextBox {}
+#[derive(Clone)]
+pub(crate) struct Search {}
 
-pub fn new() -> TextBox {
-    TextBox {}
+pub(crate) fn new() -> Search {
+    Search {}
 }
 
-impl TextBox {
-    pub fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect, text: &str)
+impl Search {
+    pub(crate) fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect, text: &str)
     where
         B: Backend,
     {

@@ -2,11 +2,11 @@ use crate::service::prelude::*;
 use crate::service::resource_by_name;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "log_stream_name",
@@ -53,13 +53,9 @@ impl AwsResource for Resource {
         }
     }
 
-    fn without_param(&self, opts: &Opts) -> ExecuteTarget {
-        if opts.cache {
-            ExecuteTarget::ExecuteThis { parameter: None }
-        } else {
-            ExecuteTarget::ParameterFromResource {
-                param_resource: resource_by_name("logs_log_group"),
-            }
+    fn without_param(&self, _opts: &Opts) -> ExecuteTarget {
+        ExecuteTarget::ParameterFromResource {
+            param_resource: resource_by_name("logs_log_group"),
         }
     }
 
@@ -69,10 +65,6 @@ impl AwsResource for Resource {
 
     fn header(&self) -> Vec<&'static str> {
         vec!["time", "name"]
-    }
-
-    fn header_width(&self) -> Vec<Constraint> {
-        vec![Constraint::Length(20), Constraint::Min(0)]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {
@@ -89,7 +81,7 @@ impl AwsResource for Resource {
         crate::show::Section::new(&yaml)
             .yaml_name("log_stream_name")
             .raw("arn", "arn")
-            .raw("creation time", "creation_time")
+            .time("creation time", "creation_time")
             .span(
                 "event between",
                 ("first_event_timestamp", "last_event_timestamp"),

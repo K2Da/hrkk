@@ -1,3 +1,4 @@
+use crate::ui::widget::util::list;
 use tui::widgets::ListState;
 use tui::{
     backend::Backend,
@@ -7,22 +8,25 @@ use tui::{
     widgets::{Block, Borders, List, Text},
 };
 
-pub struct Box {
-    pub state: ListState,
-    name: String,
-    pub items: Vec<String>,
+#[derive(Clone)]
+pub(crate) struct TextList {
+    pub(crate) state: ListState,
+    pub(crate) name: String,
+    pub(crate) items: Vec<String>,
 }
 
-pub fn new(name: &str, items: &Vec<String>) -> Box {
-    Box {
+pub(crate) fn new(name: &str, items: &Vec<String>) -> TextList {
+    let mut list_box = TextList {
         state: ListState::default(),
         name: format!(" {} ", name),
         items: items.clone(),
-    }
+    };
+    list::select_any(&mut list_box.state, items.len());
+    list_box
 }
 
-impl Box {
-    pub fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect)
+impl TextList {
+    pub(crate) fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect)
     where
         B: Backend,
     {
@@ -31,10 +35,11 @@ impl Box {
             .highlight_style(Style::default().fg(Color::Yellow).modifier(Modifier::BOLD))
             .highlight_symbol(">️ ");
 
+        f.render_widget(tui::widgets::Clear, area);
         f.render_stateful_widget(widget, area, &mut self.state);
     }
 
-    pub fn selected_item(&self) -> Option<String> {
+    pub(crate) fn selected_item(&self) -> Option<String> {
         if let Some(index) = self.state.selected() {
             return Some(self.items[index].clone());
         }

@@ -1,35 +1,44 @@
 use crate::show;
+use crate::ui::ViewerMode;
 use tui::{
     backend::Backend,
     layout::Rect,
     terminal::Frame,
-    widgets::{Paragraph, Text},
+    widgets::{Block, Borders, Paragraph},
 };
-pub struct Box {
-    pub scroll: u16,
-    pub text: show::Section,
+
+#[derive(Clone)]
+pub(crate) struct Viewer {
+    pub(in crate::ui) scroll: u16,
+    text: show::Section,
+    pub(in crate::ui) line_len: u16,
 }
 
-pub fn new(text: show::Section) -> Box {
-    Box { text, scroll: 0 }
+pub(crate) fn new(text: show::Section) -> Viewer {
+    Viewer {
+        text,
+        scroll: 0,
+        line_len: 0,
+    }
 }
 
-impl Box {
-    pub fn draw<B>(&mut self, f: &mut Frame<B>, area: Rect)
+impl Viewer {
+    pub(crate) fn draw<B>(&mut self, f: &mut Frame<B>, viewer_mode: &ViewerMode, area: Rect)
     where
         B: Backend,
     {
-        let mut text = vec![];
+        let printed = match viewer_mode {
+            ViewerMode::Yaml => self.text.print_all_yaml(area.width as isize),
+            ViewerMode::Summary => self.text.print_summary(area.width as isize),
+        };
 
-        let texts = self.text.print_all(area.width as isize).0;
-        for t in &texts {
-            match t {
-                show::Txt::Raw(str) => text.push(Text::raw(str)),
-                show::Txt::Styled(str, style) => text.push(Text::styled(str, style.clone())),
-            }
-        }
-
-        let widget = Paragraph::new(text.iter()).wrap(false).raw(false).scroll(0);
+        let (texts, line_len) = printed.to_tui_texts();
+        self.line_len = line_len;
+        let widget = Paragraph::new(texts.iter())
+            .block(Block::default().borders(Borders::BOTTOM))
+            .wrap(false)
+            .raw(false)
+            .scroll(self.scroll);
         f.render_widget(widget, area);
     }
 }

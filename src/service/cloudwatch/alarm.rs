@@ -1,11 +1,11 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "alarm_arn",
@@ -53,10 +53,6 @@ impl AwsResource for Resource {
 
     fn header(&self) -> Vec<&'static str> {
         vec!["state", "name"]
-    }
-
-    fn header_width(&self) -> Vec<Constraint> {
-        vec![Constraint::Length(10), Constraint::Min(0)]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {

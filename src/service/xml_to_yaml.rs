@@ -7,7 +7,7 @@ use xml::reader::XmlEvent;
 use xml::EventReader;
 use yaml_rust::Yaml;
 
-pub fn convert(source: &[u8], iteration_tag: &Vec<&str>) -> Result<Yaml> {
+pub(crate) fn convert(source: &[u8], iteration_tag: &Vec<&str>) -> Result<Yaml> {
     let reader = EventReader::new_with_config(source, ParserConfig::new().trim_whitespace(false));
     let elements = to_elements(reader)?;
     let (yaml, _) = convert_element(&elements, 0, iteration_tag)?;
