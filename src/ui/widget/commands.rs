@@ -101,10 +101,7 @@ impl Commands {
                         item.command.command_name()
                     ))
                     .str("document", &item.command.info().document_url)
-                    .str(
-                        "result limit",
-                        &format!("{}", &item.command.info().max_limit),
-                    )
+                    .str("result limit", &format!("{}", &item.command.max_limit()))
             }
             None => show::Section::new_without_yaml(),
         }

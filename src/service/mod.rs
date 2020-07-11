@@ -1,22 +1,17 @@
 use crate::error::Error::*;
 use crate::error::Result;
 use crate::opts::{Opts, SubCommand};
-use rusoto_core::signature::SignedRequest;
-use rusoto_credential::ChainProvider;
 pub(crate) use serde::Serialize;
+use serde_json::{Map, Value};
 use yaml_rust::Yaml;
 
+pub(crate) mod athena;
 pub(crate) mod cloudwatch;
 pub(crate) mod ec2;
-pub(crate) mod file;
-pub(crate) mod json_helper;
-mod json_to_yaml;
 pub(crate) mod logs;
-mod prelude;
+pub(crate) mod prelude;
 pub(crate) mod rds;
 pub(crate) mod ssm;
-pub(crate) mod xml_helper;
-mod xml_to_yaml;
 
 pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
     vec![
@@ -29,6 +24,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(ssm::automation_execution::new()),
         Box::new(ssm::document::new()),
         Box::new(ssm::session::new()),
+        Box::new(athena::query_execution::new()),
     ]
 }
 
@@ -46,28 +42,45 @@ pub(crate) struct Info {
     key_attribute: &'static str,
     service_name: &'static str,
     resource_type_name: &'static str,
-    api_type: ApiType,
+    pub(crate) api_type: ApiType,
     pub(crate) document_url: &'static str,
-    pub(crate) max_limit: i64,
 }
 
 #[derive(Serialize, Clone)]
 pub(crate) enum ApiType {
-    Xml {
-        service_name: &'static str,
-        action: &'static str,
-        version: &'static str,
-        limit_name: &'static str,
-        iteration_tag: Vec<&'static str>,
-    },
-    Json {
-        service_name: &'static str,
-        target: &'static str,
-        json: serde_json::Value,
-        limit_name: &'static str,
-        token_name: &'static str,
-        parameter_name: Option<&'static str>,
-    },
+    Xml(XmlApi),
+    Json(JsonApi),
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct XmlApi {
+    pub(crate) service_name: &'static str,
+    pub(crate) action: &'static str,
+    pub(crate) version: &'static str,
+    pub(crate) limit_name: &'static str,
+    pub(crate) iteration_tag: Vec<&'static str>,
+    pub(crate) max_limit: i64,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct JsonApi {
+    pub(crate) service_name: &'static str,
+    pub(crate) target: &'static str,
+    pub(crate) json: serde_json::Value,
+    pub(crate) limit_name: &'static str,
+    pub(crate) token_name: &'static str,
+    pub(crate) parameter_name: Option<&'static str>,
+    pub(crate) max_limit: i64,
+}
+
+impl JsonApi {
+    pub(crate) fn json_map(&self) -> Result<Map<String, Value>> {
+        if let Value::Object(map) = &self.json {
+            return Ok(map.clone());
+        } else {
+            Err(SettingError("request json is not a map.".to_string()))
+        }
+    }
 }
 
 impl Clone for Box<dyn AwsResource> {
@@ -144,6 +157,13 @@ pub(crate) trait AwsResource: Send + Sync {
     fn response_type(&self) -> ApiType {
         self.info().api_type.clone()
     }
+
+    fn max_limit(&self) -> i64 {
+        match self.info().api_type {
+            ApiType::Xml(XmlApi { max_limit, .. }) => max_limit,
+            ApiType::Json(JsonApi { max_limit, .. }) => max_limit,
+        }
+    }
 }
 
 pub(crate) enum ExecuteTarget {
@@ -192,58 +212,5 @@ pub(crate) fn next_token(yaml: &Yaml) -> Option<String> {
     match &yaml["next_token"] {
         Yaml::String(token) => Some(token.to_owned()),
         _ => None,
-    }
-}
-
-pub(crate) async fn fetch(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-    next_token: Option<String>,
-) -> Result<(Vec<Yaml>, Option<String>)> {
-    let request = request(resource, parameter, opts, next_token)?;
-
-    let mut response =
-        rusoto_core::Client::new_with(ChainProvider::default(), rusoto_core::HttpClient::new()?)
-            .sign_and_dispatch(request)
-            .await
-            .map_err(|e| RusotoError(format!("{:?}", e)))?;
-
-    let response = response
-        .buffer()
-        .await
-        .map_err(|e| RusotoError(format!("{}", e)))?;
-
-    if !response.status.is_success() {
-        return Err(RusotoError(
-            String::from_utf8(response.body.as_ref().to_vec()).unwrap_or("".to_string()),
-        ));
-    }
-
-    if !response.body.is_empty() {
-        if opts.debug {
-            file::store_response(response.body.as_ref())?;
-        }
-        let yaml = match resource.response_type() {
-            ApiType::Xml { iteration_tag, .. } => {
-                xml_to_yaml::convert(response.body.as_ref(), &iteration_tag)?
-            }
-            ApiType::Json { .. } => json_to_yaml::convert(response.body.as_ref())?,
-        };
-        Ok(resource.make_vec(&yaml))
-    } else {
-        Err(RusotoError("response body is empty.".to_string()))
-    }
-}
-
-fn request(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-    next_token: Option<String>,
-) -> Result<SignedRequest> {
-    match &resource.info().api_type {
-        ApiType::Xml { .. } => xml_helper::request(opts, next_token, resource),
-        ApiType::Json { .. } => json_helper::request(opts, next_token, parameter, resource),
     }
 }

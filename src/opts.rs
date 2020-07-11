@@ -79,7 +79,14 @@ impl Opts {
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]
 pub(crate) enum SubCommand {
-    /// CloudWatch.
+    /// Athena
+    #[structopt(name = "athena")]
+    Athena {
+        #[structopt(subcommand)]
+        command: AthenaCommand,
+    },
+
+    /// CloudWatch
     #[structopt(name = "cloudwatch")]
     Cloudwatch {
         #[structopt(subcommand)]
@@ -157,4 +164,10 @@ pub(crate) enum CloudwatchCommand {
     Alarm,
     #[structopt(name = "alarm-history")]
     AlarmHistory,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum AthenaCommand {
+    #[structopt(name = "query-execution")]
+    QueryExecution,
 }

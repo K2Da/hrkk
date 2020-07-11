@@ -1,9 +1,9 @@
 use super::SceneBase;
+use crate::api::file::store_yaml;
 use crate::color;
 use crate::error::Result;
 use crate::help::{Help, Helps};
 use crate::log::Log;
-use crate::service::file::store_yaml;
 use crate::service::AwsResource;
 use crate::show::{Texts, Txt};
 use crate::ui::{
@@ -379,7 +379,7 @@ impl Scene {
         let start = Local::now();
 
         tokio::spawn(async move {
-            match crate::service::fetch(&*resource, &parameter, &opts, next_token).await {
+            match crate::api::list::call(&*resource, &parameter, &opts, next_token).await {
                 Ok((yaml, next_token)) => {
                     let _ = tx
                         .send(Event::DescribeResponse {

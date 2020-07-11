@@ -11,16 +11,16 @@ pub(crate) fn new() -> Resource {
             key_attribute: "name",
             service_name: "ssm",
             resource_type_name: "document",
-            api_type: ApiType::Json {
+            api_type: ApiType::Json(JsonApi {
                 service_name: "ssm",
                 target: "AmazonSSM.ListDocuments",
                 json: json!({}),
                 limit_name: "MaxResults",
                 token_name: "NextToken",
                 parameter_name: None,
-            },
+                max_limit: 50,
+            }),
             document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
-            max_limit: 50,
         },
     }
 }

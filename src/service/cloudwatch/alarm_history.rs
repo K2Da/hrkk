@@ -11,16 +11,16 @@ pub(crate) fn new() -> Resource {
             key_attribute: "alarm_name",
             service_name: "cloudwatch",
             resource_type_name: "alarm_history",
-            api_type: ApiType::Xml {
+            api_type: ApiType::Xml(XmlApi {
                 service_name: "monitoring",
                 action: "DescribeAlarmHistory",
                 version: "2010-08-01",
                 limit_name: "MaxRecords",
                 iteration_tag: vec!["member"],
-            },
+                max_limit: 100,
+            }),
             document_url:
                 "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarmHistory.html",
-            max_limit: 100,
         },
     }
 }

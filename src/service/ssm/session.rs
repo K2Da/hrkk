@@ -11,16 +11,16 @@ pub(crate) fn new() -> Resource {
             key_attribute: "session_id",
             service_name: "ssm",
             resource_type_name: "session",
-            api_type: ApiType::Json {
+            api_type: ApiType::Json(JsonApi {
                 service_name: "ssm",
                 target: "AmazonSSM.DescribeSessions",
                 json: json!({}),
                 limit_name: "MaxResults",
                 token_name: "NextToken",
                 parameter_name: Some("State"),
-            },
+                max_limit: 200,
+            }),
             document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
-            max_limit: 200,
         },
     }
 }

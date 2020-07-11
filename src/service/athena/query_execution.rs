@@ -9,19 +9,19 @@ pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
             key_attribute: "instance_id",
-            service_name: "ec2",
-            resource_type_name: "instance",
-            api_type: ApiType::Xml(XmlApi {
-                service_name: "ec2",
-                action: "DescribeInstances",
-                version: "2016-11-15",
+            service_name: "athena",
+            resource_type_name: "query_execution",
+            api_type: ApiType::Json(JsonApi {
+                service_name: "athena",
+                target: "AmazonAthena.ListQueryExecutions",
+                json: json!({}),
                 limit_name: "MaxResults",
-                iteration_tag: vec!["item"],
-                max_limit: 1000,
+                token_name: "NextToken",
+                parameter_name: None,
+                max_limit: 50,
             }),
-
             document_url:
-                "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html",
+                "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
         },
     }
 }
@@ -32,21 +32,17 @@ impl AwsResource for Resource {
     }
 
     fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Ec2 {
-            command: Ec2Command::Instance,
+        Some(SubCommand::Athena {
+            command: AthenaCommand::QueryExecution,
         })
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
         let mut result = vec![];
 
-        if let Yaml::Array(reservations) = &yaml["reservation_set"] {
-            for reservation in reservations {
-                if let Yaml::Array(instances) = &reservation["instances_set"] {
-                    for instance in instances {
-                        result.push(instance.clone());
-                    }
-                }
+        if let Yaml::Array(ids) = &yaml["query_execution_ids"] {
+            for id in ids {
+                result.push(id.clone());
             }
         }
 
@@ -54,15 +50,11 @@ impl AwsResource for Resource {
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["instance id", "state", "name"]
+        vec!["query execution id"]
     }
 
     fn line(&self, item: &Yaml) -> Vec<String> {
-        vec![
-            show::raw(&item["instance_id"]),
-            show::raw(&item["instance_state"]["name"]),
-            show::raw(&tag_value(&item["tag_set"], "Name")),
-        ]
+        vec![show::raw(&item)]
     }
 
     fn detail(&self, yaml: &Yaml) -> crate::show::Section {

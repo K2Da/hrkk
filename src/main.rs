@@ -1,6 +1,7 @@
 use error::Result;
 use structopt::StructOpt;
 
+mod api;
 mod color;
 mod error;
 mod help;

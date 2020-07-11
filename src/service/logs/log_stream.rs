@@ -12,18 +12,18 @@ pub(crate) fn new() -> Resource {
             key_attribute: "log_stream_name",
             service_name: "logs",
             resource_type_name: "log_stream",
-            api_type: ApiType::Json {
+            api_type: ApiType::Json(JsonApi {
                 service_name: "logs",
                 target: "Logs_20140328.DescribeLogStreams",
                 json: json!({ "descending": Some(true), "orderBy": Some("LastEventTime".to_owned()) }),
                 limit_name: "limit",
                 token_name: "nextToken",
                 parameter_name: Some("logGroupName"),
-            },
+                max_limit: 50,
+            }),
 
             document_url:
             "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html",
-            max_limit: 50,
         },
     }
 }

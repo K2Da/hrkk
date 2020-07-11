@@ -11,15 +11,15 @@ pub(crate) fn new() -> Resource {
             key_attribute: "db_instance_identifier",
             service_name: "rds",
             resource_type_name: "db_instance",
-            api_type: ApiType::Xml {
+            api_type: ApiType::Xml(XmlApi {
                 service_name: "rds",
                 action: "DescribeDBInstances",
                 version: "2014-10-31",
                 limit_name: "MaxResults",
                 iteration_tag: vec!["Subnet", "DBInstance"],
-            },
+                max_limit: 100,
+            }),
             document_url: "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html",
-            max_limit: 100,
         },
     }
 }
