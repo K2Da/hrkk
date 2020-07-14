@@ -8,26 +8,25 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "log_group_name",
-            service_name: "logs",
-            resource_type_name: "log_group",
+            key_attribute: "",
+            service_name: "lambda",
+            resource_type_name: "function",
             list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Post {
-                    target: "Logs_20140328.DescribeLogGroups",
+                method: JsonListMethod::Get {
+                    path: "/2015-03-31/functions/",
                 },
-                service_name: "logs",
-                json: json!({}),
-                limit_name: "limit",
-                token_name: "nextToken",
+                service_name: "lambda",
+                json: json!({ "descending": Some(true) }),
+                limit_name: "MaxItems",
+                token_name: "Marker",
                 parameter_name: None,
-                max_limit: 50,
+                max_limit: 10000,
             }),
             get_api: None,
-
             list_api_document_url:
-            "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html",
+                "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html",
             get_api_document_url: None,
-            resource_url: Some( "cloudwatch/home?#logsV2:log-groups/log-group/{log_group_name}" )
+            resource_url: Some("lambda/home?#/functions/{function_name}"),
         },
     }
 }
@@ -38,34 +37,36 @@ impl AwsResource for Resource {
     }
 
     fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Logs {
-            command: LogsCommand::LogGroup,
+        Some(SubCommand::Lambda {
+            command: LambdaCommand::Function,
         })
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["log_groups"])
+        make_vec(self, &yaml["functions"])
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["name"]
+        vec!["name", "runtime"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![show::raw(&list["log_group_name"])]
+        vec![
+            show::raw(&list["function_name"]),
+            show::raw(&list["runtime"]),
+        ]
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
         Section::new(&list)
-            .yaml_name("log_group_name")
+            .yaml_name("function_name")
             .resource_url(self.console_url(list, get, region))
-            .raw("arn")
-            .time("creation_time")
-            .raw("metric_filter_count")
-            .byte("stored_bytes")
+            .raw("runtime")
+            .raw("memory_size")
+            .raw("role")
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("log_group_name", show::raw(&list["log_group_name"]))])
+        Some(vec![("function_name", show::raw(&list["function_name"]))])
     }
 }

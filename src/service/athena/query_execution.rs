@@ -8,20 +8,30 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "instance_id",
+            key_attribute: "",
             service_name: "athena",
             resource_type_name: "query_execution",
-            api_type: ApiType::Json(JsonApi {
+            list_api: ListApi::Json(JsonListApi {
+                method: JsonListMethod::Post {
+                    target: "AmazonAthena.ListQueryExecutions",
+                },
                 service_name: "athena",
-                target: "AmazonAthena.ListQueryExecutions",
                 json: json!({}),
                 limit_name: "MaxResults",
                 token_name: "NextToken",
                 parameter_name: None,
                 max_limit: 50,
             }),
-            document_url:
+            get_api: Some(GetApi::Json(JsonGetApi{
+                service_name: "athena",
+                target: "AmazonAthena.GetQueryExecution",
+                parameter_name: "QueryExecutionId",
+            })),
+            list_api_document_url:
                 "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
+            get_api_document_url:
+                Some("https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html"),
+            resource_url: Some("athena/home?#query/history/{execution_id}"),
         },
     }
 }
@@ -37,50 +47,64 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        let mut result = vec![];
-
-        if let Yaml::Array(ids) = &yaml["query_execution_ids"] {
-            for id in ids {
-                result.push(id.clone());
-            }
-        }
-
-        (result, next_token(&yaml))
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        make_vec(self, &yaml["query_execution_ids"])
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["query execution id"]
+        vec!["query execution id", "state", "completion time"]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
-        vec![show::raw(&item)]
+    fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
+        match get {
+            Some(get) => vec![
+                show::raw(&get["query_execution"]["query_execution_id"]),
+                show::raw(&get["query_execution"]["status"]["state"]),
+                show::time(&get["query_execution"]["status"]["completion_date_time"]),
+            ],
+            None => vec![show::raw(&list), "".to_string()],
+        }
     }
 
-    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
-        crate::show::Section::new(&yaml)
-            .tag_name("tag_set", "Name")
-            .raw("instance_id", "instance_id")
-            .raw("instance_type", "instance_type")
-            .raw("architecture", "architecture")
-            .raw2("state", ("instance_state", "name"))
-            .section(
-                crate::show::Section::new(&yaml)
-                    .string_name("tags")
-                    .yaml_pairs("tag_set", ("key", "value")),
-            )
-            .section(
-                crate::show::Section::new(&yaml)
-                    .string_name("network")
-                    .raw("subnet id", "subnet_id")
-                    .raw("private ip address", "private_ip_address")
-                    .raw2("availability zone", ("placement", "availability_zone")),
-            )
-            .section(
-                crate::show::Section::new(&yaml)
-                    .string_name("device")
-                    .raw("root device type", "root_device_type")
-                    .raw("root device name", "root_device_name"),
-            )
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        match get {
+            None => Section::new(list),
+            Some(yaml) => Section::new(&yaml)
+                .yaml_name2(("query_execution", "query_execution_id"))
+                .resource_url(self.console_url(list, get, region))
+                .raw2("query", ("query_execution", "query"))
+                .raw3(
+                    "output",
+                    ("query_execution", "result_configuration", "output_location"),
+                )
+                .raw3("state", ("query_execution", "status", "state"))
+                .time3(
+                    "completion time",
+                    ("query_execution", "status", "completion_date_time"),
+                )
+                .byte3(
+                    "data scanned",
+                    ("query_execution", "statistics", "data_scanned_in_bytes"),
+                )
+                .milli_sec3(
+                    "execution sec",
+                    (
+                        "query_execution_detail",
+                        "stats",
+                        "engine_execution_time_in_millis",
+                    ),
+                ),
+        }
+    }
+
+    fn url_params(&self, _list: &Yaml, get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+        if let Some(yaml) = get {
+            Some(vec![(
+                "execution_id",
+                show::raw(&yaml["query_execution"]["query_execution_id"]),
+            )])
+        } else {
+            None
+        }
     }
 }

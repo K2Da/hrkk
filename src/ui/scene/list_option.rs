@@ -32,9 +32,9 @@ impl Scene {
     pub(in crate::ui) fn handle_events(
         &mut self,
         ui_state: &mut UiState,
-        key: Option<rustbox::keyboard::Key>,
+        keys: Vec<rustbox::keyboard::Key>,
     ) -> Result<NextScene> {
-        if let Some(key) = key {
+        for key in keys {
             match key {
                 Key::Esc => return Ok(self.base.back_or_root_menu()),
 

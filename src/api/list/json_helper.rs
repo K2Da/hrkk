@@ -5,7 +5,7 @@ pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
     parameter: &Option<String>,
-    json_api: &JsonApi,
+    json_api: &JsonListApi,
 ) -> Result<SignedRequest> {
     let mut map = json_api.json_map()?;
     map.insert(
@@ -28,17 +28,21 @@ pub(crate) fn request(
 
     let encoded = Value::Object(map);
 
-    let mut request = SignedRequest::new("POST", json_api.service_name, &opts.region()?, "/");
-    request.set_content_type("application/x-amz-json-1.1".to_owned());
-    request.add_header("x-amz-target", json_api.target);
-    request.set_payload(Some(encoded.to_string()));
-    Ok(request)
-}
+    let mut request = match json_api.method {
+        JsonListMethod::Post { .. } => {
+            SignedRequest::new("POST", json_api.service_name, &opts.region()?, "/")
+        }
+        JsonListMethod::Get { path } => {
+            SignedRequest::new("GET", json_api.service_name, &opts.region()?, path)
+        }
+    };
 
-pub(crate) fn make_vec(yaml: &Yaml, root: &str) -> (Vec<Yaml>, Option<String>) {
-    if let Yaml::Array(groups) = &yaml[root] {
-        return (groups.clone(), next_token(&yaml));
+    request.set_content_type("application/x-amz-json-1.1".to_owned());
+
+    if let JsonListMethod::Post { target } = json_api.method {
+        request.add_header("x-amz-target", target);
     }
 
-    (vec![], next_token(&yaml))
+    request.set_payload(Some(encoded.to_string()));
+    Ok(request)
 }

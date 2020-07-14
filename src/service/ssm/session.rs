@@ -11,16 +11,21 @@ pub(crate) fn new() -> Resource {
             key_attribute: "session_id",
             service_name: "ssm",
             resource_type_name: "session",
-            api_type: ApiType::Json(JsonApi {
+            list_api: ListApi::Json(JsonListApi {
+                method: JsonListMethod::Post {
+                    target: "AmazonSSM.DescribeSessions",
+                },
                 service_name: "ssm",
-                target: "AmazonSSM.DescribeSessions",
                 json: json!({}),
                 limit_name: "MaxResults",
                 token_name: "NextToken",
                 parameter_name: Some("State"),
                 max_limit: 200,
             }),
-            document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
+            get_api: None,
+            list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
+            get_api_document_url: None,
+            resource_url: None,
         },
     }
 }
@@ -67,34 +72,34 @@ impl AwsResource for Resource {
         }
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "sessions")
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        make_vec(self, &yaml["sessions"])
     }
 
     fn header(&self) -> Vec<&'static str> {
         vec!["id", "target", "date"]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&item["session_id"]),
-            show::raw(&item["target"]),
-            show::span(&item["start_date"], &item["end_date"]),
+            show::raw(&list["session_id"]),
+            show::raw(&list["target"]),
+            show::span(&list["start_date"], &list["end_date"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
-        crate::show::Section::new(&yaml)
+    fn detail(&self, yaml: &Yaml, _get_yaml: &Option<Yaml>, _region: &str) -> Section {
+        Section::new(&yaml)
             .yaml_name("session_id")
-            .raw("owner", "owner")
-            .raw("target", "target")
-            .raw("status", "status")
+            .raw("owner")
+            .raw("target")
+            .raw("status")
             .span("date", ("start_date", "end_date"))
             .section(
-                crate::show::Section::new(&yaml["output_url"])
+                Section::new(&yaml["output_url"])
                     .string_name("output url")
-                    .raw("cloudwatch", "cloud_watch_output_url")
-                    .raw("s3", "s3_output_url"),
+                    .raw1("cloudwatch", "cloud_watch_output_url")
+                    .raw1("s3", "s3_output_url"),
             )
     }
 }

@@ -4,12 +4,12 @@ use crate::ui::NextScene;
 use rustbox::keyboard::Key;
 
 pub(in crate::ui) fn popup(
-    key: Option<Key>,
+    keys: Vec<Key>,
     base: &mut SceneBase,
     offset: &mut u16,
     line_len: u16,
 ) -> NextScene {
-    if let Some(key) = key {
+    for key in keys {
         match key {
             Key::Esc | Key::Ctrl('v') | Key::Char('V') => return base.back_or_root_menu(),
 

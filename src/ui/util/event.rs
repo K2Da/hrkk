@@ -1,14 +1,19 @@
 use crate::log::Log;
+use crate::service::prelude::Yaml;
 use chrono::prelude::*;
 use tokio::sync::mpsc;
-use yaml_rust::Yaml;
 
 #[derive(Debug)]
 pub(crate) enum Event {
-    DescribeResponse {
+    ListResponse {
         start: DateTime<Local>,
-        yaml: Vec<Yaml>,
+        yaml: crate::service::ResourceList,
         next_token: Option<String>,
+    },
+    GetResponse {
+        start: DateTime<Local>,
+        yaml: Yaml,
+        resource_index: usize,
     },
     Log(Log),
 }

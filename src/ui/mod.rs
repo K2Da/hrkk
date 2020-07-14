@@ -40,7 +40,7 @@ impl UiScene {
         match self {
             Commands(scene) => scene.status(current),
             Resource(scene) => scene.status(current),
-            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!(),
+            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!("status"),
         }
     }
 
@@ -48,7 +48,7 @@ impl UiScene {
         match self {
             Commands(scene) => scene.overlay(other),
             Resource(scene) => scene.overlay(other),
-            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!(),
+            OptionPopup(_) | TextPopup(_) | SectionPopup(_) => panic!("overlay"),
         }
     }
 
@@ -70,14 +70,14 @@ impl UiScene {
         &mut self,
         ui_state: &mut UiState,
         events: &mut Events,
-        key: Option<Key>,
+        keys: Vec<Key>,
     ) -> Result<NextScene> {
         match self {
-            Commands(scene) => Ok(scene.handle_events(ui_state, events, key)?),
-            Resource(scene) => Ok(scene.handle_events(ui_state, events, key)?),
-            OptionPopup(scene) => Ok(scene.handle_events(ui_state, key)?),
-            TextPopup(scene) => Ok(scene.handle_events(key)),
-            SectionPopup(scene) => Ok(scene.handle_events(key)),
+            Commands(scene) => Ok(scene.handle_events(ui_state, events, keys)?),
+            Resource(scene) => Ok(scene.handle_events(ui_state, events, keys)?),
+            OptionPopup(scene) => Ok(scene.handle_events(ui_state, keys)?),
+            TextPopup(scene) => Ok(scene.handle_events(keys)),
+            SectionPopup(scene) => Ok(scene.handle_events(keys)),
         }
     }
 
@@ -158,7 +158,7 @@ pub(in crate::ui) fn select_next_scene(
                     ui_state,
                 ))
             }
-            ExecuteTarget::Null => panic!(),
+            ExecuteTarget::Null => panic!("null target"),
         },
     }
 }
@@ -221,10 +221,10 @@ pub(crate) async fn tui(
     };
 
     let output_text;
-    let mut key = None;
+    let mut keys = vec![];
 
     loop {
-        match scene.handle_events(&mut ui_state, &mut events, key)? {
+        match scene.handle_events(&mut ui_state, &mut events, keys)? {
             NextScene::Same => (),
             NextScene::Scene(next_scene) => scene = next_scene,
             NextScene::Exit(output) => {
@@ -237,7 +237,7 @@ pub(crate) async fn tui(
             terminal.draw(|mut f| scene.draw(&mut ui_state, &mut f))?;
         }
 
-        key = peek_event(&mut terminal, &mut scene);
+        keys = peek_event(&mut terminal, &mut scene);
     }
 
     drop(terminal);
@@ -249,16 +249,17 @@ pub(crate) async fn tui(
     Ok(())
 }
 
-fn peek_event(terminal: &mut Terminal<RustboxBackend>, scene: &mut UiScene) -> Option<Key> {
-    loop {
-        match terminal
+fn peek_event(terminal: &mut Terminal<RustboxBackend>, scene: &mut UiScene) -> Vec<Key> {
+    let mut keys = vec![];
+    for _ in 0..10 {
+        let event = terminal
             .backend()
             .rustbox()
-            .peek_event(Duration::from_millis(100), false)
-        {
+            .peek_event(Duration::from_millis(10), false);
+        match event {
             Ok(rustbox::Event::KeyEvent(event_key)) => {
                 scene.set_should_draw();
-                return Some(event_key);
+                keys.push(event_key);
             }
 
             Ok(rustbox::Event::ResizeEvent(_, _)) => {
@@ -268,8 +269,11 @@ fn peek_event(terminal: &mut Terminal<RustboxBackend>, scene: &mut UiScene) -> O
             }
 
             _ => {
-                return None;
+                if keys.len() > 0 {
+                    return keys;
+                }
             }
         }
     }
+    keys
 }

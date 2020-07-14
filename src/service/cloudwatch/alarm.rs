@@ -11,16 +11,25 @@ pub(crate) fn new() -> Resource {
             key_attribute: "alarm_arn",
             service_name: "cloudwatch",
             resource_type_name: "alarm",
-            api_type: ApiType::Xml(XmlApi {
+            list_api: ListApi::Xml(XmlListApi {
+                method: XmlListMethod::Post,
                 service_name: "monitoring",
-                action: "DescribeAlarms",
-                version: "2010-08-01",
-                limit_name: "MaxRecords",
+                action: Some("DescribeAlarms"),
+                version: Some("2010-08-01"),
                 iteration_tag: vec!["member"],
-                max_limit: 100,
+                limit: Some(Limit {
+                    name: "MaxRecords",
+                    max: 100,
+                }),
+                params: vec![],
             }),
-            document_url:
+            get_api: None,
+            list_api_document_url:
                 "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
+            get_api_document_url: None,
+            resource_url: Some(
+                "cloudwatch/home?#alarmsV2:alarm/{alarm_name}"
+            ),
         },
     }
 }
@@ -36,7 +45,7 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         let mut arr = vec![];
         let yaml = &yaml["describe_alarms_result"];
 
@@ -48,32 +57,41 @@ impl AwsResource for Resource {
             arr.append(&mut groups.clone());
         }
 
-        (arr, next_token(&yaml))
+        let vec = arr
+            .iter()
+            .map(|y| (self.line(y, &None), y.clone()))
+            .collect();
+        (vec, next_token(&yaml))
     }
 
     fn header(&self) -> Vec<&'static str> {
         vec!["state", "name"]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&item["state_value"]),
-            show::raw(&item["alarm_name"]),
+            show::raw(&list["state_value"]),
+            show::raw(&list["alarm_name"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
-        crate::show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(&list)
             .yaml_name("alarm_name")
-            .raw("namespace", "namespace")
-            .raw("description", "alarm_description")
+            .resource_url(self.console_url(list, get, region))
+            .raw("namespace")
+            .raw("alarm_description")
             .section(
-                crate::show::Section::new(&yaml)
+                Section::new(&list)
                     .string_name("state")
-                    .raw("value", "state_value")
-                    .raw("reason", "state_reason")
-                    .raw("reason data", "state_reason_data")
-                    .raw("updated", "state_updated_timestamp"),
+                    .raw1("value", "state_value")
+                    .raw1("reason", "state_reason")
+                    .raw1("reason data", "state_reason_data")
+                    .raw1("updated", "state_updated_timestamp"),
             )
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+        Some(vec![("alarm_name", show::raw(&list["alarm_name"]))])
     }
 }

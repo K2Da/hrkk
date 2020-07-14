@@ -45,4 +45,7 @@ pub(crate) enum Error {
 
     #[error("rustbox init error {0:?}")]
     RustboxError(#[from] rustbox::InitError),
+
+    #[error("url encode error {0:?}")]
+    SerdeUrlEncodeError(#[from] serde_urlencoded::ser::Error),
 }

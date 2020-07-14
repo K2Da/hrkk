@@ -1,12 +1,15 @@
-pub(crate) use crate::api::list::json_helper;
+pub(crate) use crate::api::list::make_vec;
 pub(crate) use crate::error::Error::*;
 pub(crate) use crate::error::Result;
 pub(crate) use crate::opts::Opts;
 pub(crate) use crate::opts::*;
 pub(crate) use crate::service::{
-    next_token, tag_value, ApiType, AwsResource, ExecuteTarget, Info, JsonApi, XmlApi,
+    merge_yamls, next_token, tag_value, AwsResource, ExecuteTarget, GetApi, Info, JsonGetApi,
+    JsonListApi, JsonListMethod, Limit, ListApi, ResourceList, XmlGetApi, XmlListApi,
+    XmlListMethod,
 };
 pub(crate) use crate::show;
+pub(crate) use crate::show::Section;
 pub(crate) use inflector::Inflector;
 pub(crate) use rusoto_signature::SignedRequest;
 pub(crate) use serde::Serialize;

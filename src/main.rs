@@ -15,7 +15,7 @@ mod ui;
 async fn main() {
     match run(opts::Opts::from_args()).await {
         Ok(_) => (),
-        Err(err) => eprintln!("{}", err),
+        Err(err) => eprintln!("{:?}", err),
     }
 }
 

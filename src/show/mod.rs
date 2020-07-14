@@ -111,9 +111,18 @@ impl Section {
         self
     }
 
+    pub(crate) fn yaml_name2(mut self, key: (&str, &str)) -> Self {
+        self.name = Some(Name::Yaml(self.yaml[key.0][key.1].clone()));
+        self
+    }
+
     pub(crate) fn string_name(mut self, name: &str) -> Self {
         self.name = Some(Name::String(name.to_string()));
         self
+    }
+
+    pub(crate) fn resource_url(self, url: String) -> Self {
+        self.child("resource_url", &url)
     }
 
     pub(crate) fn span(self, name: &str, span: (&str, &str)) -> Self {
@@ -126,28 +135,63 @@ impl Section {
         self.child(name, &duration)
     }
 
-    pub(crate) fn raw(self, name: &str, key: &str) -> Self {
+    pub(crate) fn raw(self, key: &str) -> Self {
+        let raw = self::raw(&self.yaml[key]);
+        self.child(&key.replace("_", " "), &raw)
+    }
+
+    pub(crate) fn raw1(self, name: &str, key: &str) -> Self {
         let raw = self::raw(&self.yaml[key]);
         self.child(name, &raw)
     }
 
     pub(crate) fn raw2(self, name: &str, key: (&str, &str)) -> Self {
-        let raw2 = self::raw(&self.yaml[key.0][key.1]);
-        self.child(name, &raw2)
+        let raw = self::raw(&self.yaml[key.0][key.1]);
+        self.child(name, &raw)
+    }
+
+    pub(crate) fn raw3(self, name: &str, key: (&str, &str, &str)) -> Self {
+        let raw = self::raw(&self.yaml[key.0][key.1][key.2]);
+        self.child(name, &raw)
     }
 
     pub(crate) fn str(self, name: &str, val: &str) -> Self {
         self.child(name, val)
     }
 
-    pub(crate) fn time(self, name: &str, key: &str) -> Self {
+    pub(crate) fn time(self, key: &str) -> Self {
         let time = self::time(&self.yaml[key]);
+        self.child(&key.replace("_", " "), &time)
+    }
+
+    pub(crate) fn time2(self, name: &str, key: (&str, &str)) -> Self {
+        let time = self::time(&self.yaml[key.0][key.1]);
         self.child(name, &time)
     }
 
-    pub(crate) fn byte(self, name: &str, key: &str) -> Self {
+    pub(crate) fn time3(self, name: &str, key: (&str, &str, &str)) -> Self {
+        let time = self::time(&self.yaml[key.0][key.1][key.2]);
+        self.child(name, &time)
+    }
+
+    pub(crate) fn byte(self, key: &str) -> Self {
         let byte = self::byte(&self.yaml[key]);
+        self.child(&key.replace("_", " "), &byte)
+    }
+
+    pub(crate) fn byte2(self, name: &str, key: (&str, &str)) -> Self {
+        let byte = self::byte(&self.yaml[key.0][key.1]);
         self.child(name, &byte)
+    }
+
+    pub(crate) fn byte3(self, name: &str, key: (&str, &str, &str)) -> Self {
+        let byte = self::byte(&self.yaml[key.0][key.1][key.2]);
+        self.child(name, &byte)
+    }
+
+    pub(crate) fn milli_sec3(self, name: &str, key: (&str, &str, &str)) -> Self {
+        let sec = self::milli_sec(&self.yaml[key.0][key.1][key.2]);
+        self.child(name, &sec)
     }
 
     fn child(mut self, name: &str, val: &str) -> Self {
@@ -377,14 +421,7 @@ impl Attribute {
 
         let w = width - (separator + (lv * 2) + 7) as isize;
 
-        for (i, val) in self
-            .value
-            .chars()
-            .collect::<Vec<char>>()
-            .chunks(w as usize)
-            .enumerate()
-        {
-            let value = val.iter().collect::<String>();
+        for (i, value) in split(&self.value, w as isize).iter().enumerate() {
             let right_space = rep(&space, w - value.len() as isize);
             let separator = if i == 0 { "├" } else { "│" };
 
@@ -411,6 +448,29 @@ impl Attribute {
     }
 }
 
+fn split(str: &str, width: isize) -> Vec<String> {
+    let mut split = vec![vec![]];
+    let mut i: isize = 0;
+    for c in str.chars().collect::<Vec<char>>() {
+        if c == '\n' {
+            split.push(vec![]);
+            i = 0;
+        } else if i >= width {
+            split.push(vec![]);
+            split.last_mut().unwrap().push(c);
+            i = 1;
+        } else {
+            split.last_mut().unwrap().push(c);
+            i += 1;
+        }
+    }
+
+    split
+        .iter()
+        .map(|chars| chars.iter().collect::<String>())
+        .collect()
+}
+
 pub(crate) fn raw(yaml: &Yaml) -> String {
     match yaml {
         Yaml::String(string) => string.clone(),
@@ -421,18 +481,21 @@ pub(crate) fn raw(yaml: &Yaml) -> String {
 
 pub(crate) fn byte(yaml: &Yaml) -> String {
     match yaml {
-        Yaml::Integer(byte) => {
-            if *byte < 1024 {
-                format!("{} bytes", byte)
-            } else if *byte < 1024_i64.pow(2) {
-                format!("{:.2} KiB", *byte as f64 / 1024_f64)
-            } else if *byte < 1024_i64.pow(3) {
-                format!("{:.2} MiB", *byte as f64 / 1024_f64.powf(2.0))
-            } else {
-                format!("{:.2} GiB", *byte as f64 / 1024_f64.powf(3.0))
-            }
-        }
-        _ => "?".to_string(),
+        Yaml::Integer(byte) => byte_human(byte),
+        Yaml::String(str) => byte_human(&str.parse::<i64>().unwrap_or(0)),
+        _ => format!("{:?}", yaml),
+    }
+}
+
+fn byte_human(byte: &i64) -> String {
+    if *byte < 1024 {
+        format!("{} bytes", byte)
+    } else if *byte < 1024_i64.pow(2) {
+        format!("{:.2} KiB", *byte as f64 / 1024_f64)
+    } else if *byte < 1024_i64.pow(3) {
+        format!("{:.2} MiB", *byte as f64 / 1024_f64.powf(2.0))
+    } else {
+        format!("{:.2} GiB", *byte as f64 / 1024_f64.powf(3.0))
     }
 }
 
@@ -493,6 +556,13 @@ fn trimmed_time(target: DateTime<Local>, base: DateTime<Local>) -> String {
         target.format("%a, %d %b %X").to_string()
     } else {
         target.format("%a, %d %b %Y %X").to_string()
+    }
+}
+
+pub(crate) fn milli_sec(yaml: &Yaml) -> String {
+    match yaml {
+        Yaml::Integer(milli) => format!("{} sec", *milli as f64 / 1000_f64),
+        _ => "?".to_string(),
     }
 }
 

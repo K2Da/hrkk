@@ -32,3 +32,4 @@ rustbox = "0.11.*"
 tui = { version = "0.9", default-features = false, features = ['rustbox'] }
 fuzzy-matcher = "0.3.*"
 unicode-width = "0.1.*"
+open = "1.4.*"

@@ -11,17 +11,23 @@ pub(crate) fn new() -> Resource {
             key_attribute: "instance_id",
             service_name: "ec2",
             resource_type_name: "instance",
-            api_type: ApiType::Xml(XmlApi {
+            list_api: ListApi::Xml(XmlListApi {
+                method: XmlListMethod::Post,
                 service_name: "ec2",
-                action: "DescribeInstances",
-                version: "2016-11-15",
-                limit_name: "MaxResults",
+                action: Some("DescribeInstances"),
+                version: Some("2016-11-15"),
                 iteration_tag: vec!["item"],
-                max_limit: 1000,
+                limit: Some(Limit {
+                    name: "MaxResults",
+                    max: 1000,
+                }),
+                params: vec![],
             }),
-
-            document_url:
+            get_api: None,
+            list_api_document_url:
                 "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html",
+            get_api_document_url: None,
+            resource_url: Some("ec2/v2/home?#Instances:search={instance_id}"),
         },
     }
 }
@@ -37,14 +43,14 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         let mut result = vec![];
 
         if let Yaml::Array(reservations) = &yaml["reservation_set"] {
             for reservation in reservations {
                 if let Yaml::Array(instances) = &reservation["instances_set"] {
                     for instance in instances {
-                        result.push(instance.clone());
+                        result.push((self.line(instance, &None), instance.clone()));
                     }
                 }
             }
@@ -57,38 +63,43 @@ impl AwsResource for Resource {
         vec!["instance id", "state", "name"]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&item["instance_id"]),
-            show::raw(&item["instance_state"]["name"]),
-            show::raw(&tag_value(&item["tag_set"], "Name")),
+            show::raw(&list["instance_id"]),
+            show::raw(&list["instance_state"]["name"]),
+            show::raw(&tag_value(&list["tag_set"], "Name")),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
-        crate::show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(&list)
             .tag_name("tag_set", "Name")
-            .raw("instance_id", "instance_id")
-            .raw("instance_type", "instance_type")
-            .raw("architecture", "architecture")
+            .resource_url(self.console_url(list, get, region))
+            .raw("instance_id")
+            .raw("instance_type")
+            .raw("architecture")
             .raw2("state", ("instance_state", "name"))
             .section(
-                crate::show::Section::new(&yaml)
+                Section::new(&list)
                     .string_name("tags")
                     .yaml_pairs("tag_set", ("key", "value")),
             )
             .section(
-                crate::show::Section::new(&yaml)
+                Section::new(&list)
                     .string_name("network")
-                    .raw("subnet id", "subnet_id")
-                    .raw("private ip address", "private_ip_address")
+                    .raw("subnet_id")
+                    .raw("private_ip_address")
                     .raw2("availability zone", ("placement", "availability_zone")),
             )
             .section(
-                crate::show::Section::new(&yaml)
+                Section::new(&list)
                     .string_name("device")
-                    .raw("root device type", "root_device_type")
-                    .raw("root device name", "root_device_name"),
+                    .raw("root_device_type")
+                    .raw("root_device_name"),
             )
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+        Some(vec![("instance_id", show::raw(&list["instance_id"]))])
     }
 }

@@ -23,14 +23,18 @@ pub(crate) fn new(base: SceneBase, title: &str, section: Section) -> Scene {
         offset: 0,
         section,
 
-        text_block: widget::popup_text::new(title, Helps::new(popup::helps()).to_summary_text()),
+        text_block: widget::popup_text::new(
+            title,
+            Helps::new(popup::helps()).to_summary_text(),
+            false,
+        ),
     }
 }
 
 impl Scene {
-    pub(crate) fn handle_events(&mut self, key: Option<Key>) -> NextScene {
+    pub(crate) fn handle_events(&mut self, keys: Vec<Key>) -> NextScene {
         popup(
-            key,
+            keys,
             &mut self.base,
             &mut self.offset,
             self.text_block.line_len,

@@ -71,7 +71,8 @@ where
         .filter(|(score, _, _)| search_text.len() == 0 || *score > 0)
         .collect::<Vec<(i64, &T, usize)>>();
 
-    matched_items.sort_by(|(a, _, _), (b, _, _)| b.partial_cmp(a).unwrap());
+    matched_items
+        .sort_by(|(a, _, _), (b, _, _)| b.partial_cmp(a).unwrap_or(std::cmp::Ordering::Equal));
     state.select(None);
 
     matched_items.iter().map(|(_, _, index)| *index).collect()

@@ -12,13 +12,15 @@ pub(in crate::ui) struct PopupText {
     title: String,
     texts: Texts,
     pub(in crate::ui) line_len: u16,
+    wrap: bool,
 }
 
-pub(in crate::ui) fn new(title: &str, helps: Texts) -> PopupText {
+pub(in crate::ui) fn new(title: &str, helps: Texts, wrap: bool) -> PopupText {
     PopupText {
         title: title.to_owned(),
         texts: helps,
         line_len: 0,
+        wrap,
     }
 }
 
@@ -49,14 +51,14 @@ impl PopupText {
         );
 
         let text_paragraph = Paragraph::new(paragraph_text.iter())
-            .wrap(false)
+            .wrap(self.wrap)
             .scroll(offset);
         f.render_widget(text_paragraph, text);
 
         let (text_vec, _) = self.texts.to_tui_texts();
         let helps = text_vec.iter();
         let help_paragraph = Paragraph::new(helps)
-            .wrap(true)
+            .wrap(false)
             .block(Block::default().borders(Borders::TOP));
 
         f.render_widget(help_paragraph, help);

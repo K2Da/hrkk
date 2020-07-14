@@ -74,13 +74,13 @@ impl Scene {
         &mut self,
         ui_state: &mut UiState,
         events: &mut Events,
-        key: Option<rustbox::keyboard::Key>,
+        keys: Vec<rustbox::keyboard::Key>,
     ) -> Result<NextScene> {
         if let Some(overlay) = &mut self.base.overlay {
-            return overlay.handle_events(ui_state, events, key);
+            return overlay.handle_events(ui_state, events, keys);
         }
 
-        if let Some(key) = key {
+        for key in keys {
             if let Some(next_scene) = self.handle_keys(ui_state, events, key) {
                 return Ok(next_scene);
             }
@@ -179,7 +179,7 @@ impl Scene {
         self.info.draw(
             &mut f,
             info,
-            &self.base.opts.region().unwrap().name(),
+            &self.base.opts.region_name(),
             self.viewer.scroll,
             self.viewer.line_len,
             false,

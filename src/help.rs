@@ -20,9 +20,11 @@ impl Help {
 
     fn to_short_text(&self) -> Vec<Txt> {
         let mut text = crate::ui::widget::txt_button(&self.key).to_vec();
-        text.push(Txt::raw(":"));
-        text.push(Txt::raw(&self.short.as_ref().unwrap()));
-        text.push(Txt::raw(" "));
+        if let Some(short) = &self.short.as_ref() {
+            text.push(Txt::raw(":"));
+            text.push(Txt::raw(short));
+            text.push(Txt::raw(" "));
+        }
         text
     }
 

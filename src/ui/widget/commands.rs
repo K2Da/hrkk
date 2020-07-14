@@ -94,14 +94,36 @@ impl Commands {
         match self.state.selected() {
             Some(index) => {
                 let item = &self.items[self.filtered_indexes[index]];
-                show::Section::new_without_yaml()
+                let info = item.command.info();
+                let mut section = show::Section::new_without_yaml()
                     .string_name(&format!(
                         "{} {}",
                         item.command.service_name(),
                         item.command.command_name()
                     ))
-                    .str("document", &item.command.info().document_url)
-                    .str("result limit", &format!("{}", &item.command.max_limit()))
+                    .str("result limit", &format!("{}", &item.command.max_limit()));
+
+                section = section.str("List API", &info.list_api.name());
+
+                section = section.str("docs", &info.list_api_document_url);
+
+                if let Some(get) = &info.get_api {
+                    section = section.str("Get API", &get.name());
+                }
+
+                if let Some(url) = &info.get_api_document_url {
+                    section = section.str("docs", url);
+                }
+
+                if let Some(url) = &info.resource_url {
+                    section = section.str("resource uri", url);
+                }
+
+                if let Some(parameter_name) = &info.list_api.parameter_name() {
+                    section = section.str("required parameter", parameter_name);
+                }
+
+                section
             }
             None => show::Section::new_without_yaml(),
         }

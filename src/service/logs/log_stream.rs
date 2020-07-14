@@ -12,18 +12,22 @@ pub(crate) fn new() -> Resource {
             key_attribute: "log_stream_name",
             service_name: "logs",
             resource_type_name: "log_stream",
-            api_type: ApiType::Json(JsonApi {
+            list_api: ListApi::Json(JsonListApi {
+                method: JsonListMethod::Post {
+                    target: "Logs_20140328.DescribeLogStreams",
+                },
                 service_name: "logs",
-                target: "Logs_20140328.DescribeLogStreams",
                 json: json!({ "descending": Some(true), "orderBy": Some("LastEventTime".to_owned()) }),
                 limit_name: "limit",
                 token_name: "nextToken",
                 parameter_name: Some("logGroupName"),
                 max_limit: 50,
             }),
-
-            document_url:
+            get_api: None,
+            list_api_document_url:
             "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html",
+            get_api_document_url: None,
+            resource_url: Some("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}"),
         },
     }
 }
@@ -59,45 +63,54 @@ impl AwsResource for Resource {
         }
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "log_streams")
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        make_vec(self, &yaml["log_streams"])
     }
 
     fn header(&self) -> Vec<&'static str> {
         vec!["time", "name"]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
             show::span(
-                &item["first_event_timestamp"],
-                &item["last_event_timestamp"],
+                &list["first_event_timestamp"],
+                &list["last_event_timestamp"],
             ),
-            show::raw(&item["log_stream_name"]),
+            show::raw(&list["log_stream_name"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> crate::show::Section {
-        crate::show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(&list)
             .yaml_name("log_stream_name")
-            .raw("arn", "arn")
-            .time("creation time", "creation_time")
+            .resource_url(self.console_url(list, get, region))
+            .raw("arn")
+            .time("creation_time")
             .span(
                 "event between",
                 ("first_event_timestamp", "last_event_timestamp"),
             )
-            .time("last ingestion", "last_ingestion_time")
-            .raw("upload sequence token", "upload_sequence_token")
+            .time("last_ingestion_time")
+            .raw("upload_sequence_token")
             .section(
-                crate::show::Section::new(&yaml)
-                    .string_name("path")
-                    .string_attributes(
-                        crate::show::raw(&yaml["log_stream_name"])
-                            .split("/")
-                            .enumerate()
-                            .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
-                            .collect(),
-                    ),
+                Section::new(&list).string_name("path").string_attributes(
+                    show::raw(&list["log_stream_name"])
+                        .split("/")
+                        .enumerate()
+                        .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
+                        .collect(),
+                ),
             )
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+        Some(vec![
+            (
+                "group_name",
+                show::raw(&list["arn"]).split(":").collect::<Vec<&str>>()[6].to_owned(),
+            ),
+            ("stream_name", show::raw(&list["log_stream_name"])),
+        ])
     }
 }
