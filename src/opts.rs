@@ -117,6 +117,13 @@ pub(crate) enum SubCommand {
         command: AthenaCommand,
     },
 
+    /// AutoScaling
+    #[structopt(name = "autoscaling")]
+    Autoscaling {
+        #[structopt(subcommand)]
+        command: AutoscalingCommand,
+    },
+
     /// Cloudformation
     #[structopt(name = "cloudformation")]
     Cloudformation {
@@ -248,6 +255,12 @@ pub(crate) enum CloudwatchCommand {
 pub(crate) enum AthenaCommand {
     #[structopt(name = "query-execution")]
     QueryExecution,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum AutoscalingCommand {
+    #[structopt(name = "auto-scaling-group")]
+    AutoScalingGroup,
 }
 
 pub(crate) enum OutputType {
