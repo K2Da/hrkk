@@ -131,6 +131,13 @@ pub(crate) enum SubCommand {
         command: CloudformationCommand,
     },
 
+    /// Cloudfront
+    #[structopt(name = "cloudfront")]
+    Cloudfront {
+        #[structopt(subcommand)]
+        command: CloudfrontCommand,
+    },
+
     /// CloudWatch
     #[structopt(name = "cloudwatch")]
     Cloudwatch {
@@ -244,6 +251,12 @@ pub(crate) enum SsmCommand {
 pub(crate) enum CloudformationCommand {
     #[structopt(name = "stack")]
     Stack,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum CloudfrontCommand {
+    #[structopt(name = "distribution")]
+    Distribution,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]

@@ -9,6 +9,7 @@ use yaml_rust::Yaml;
 pub(crate) mod athena;
 pub(crate) mod autoscaling;
 pub(crate) mod cloudformation;
+pub(crate) mod cloudfront;
 pub(crate) mod cloudwatch;
 pub(crate) mod ec2;
 pub(crate) mod lambda;
@@ -26,6 +27,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(athena::query_execution::new()),
         Box::new(autoscaling::auto_scaling_group::new()),
         Box::new(cloudformation::stack::new()),
+        Box::new(cloudfront::distribution::new()),
         Box::new(cloudwatch::alarm::new()),
         Box::new(cloudwatch::alarm_history::new()),
         Box::new(cloudwatch::dashboard::new()),
