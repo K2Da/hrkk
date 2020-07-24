@@ -12,13 +12,18 @@ pub(crate) fn new() -> Resource {
             service_name: "cloudwatch",
             resource_type_name: "dashboard",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "monitoring",
-                action: Some("ListDashboards"),
-                version: Some("2010-08-01"),
                 iteration_tag: vec!["member"],
                 limit: None,
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "ListDashboards"),
+                    ("Version", "2010-08-01"),
+                ],
+                region: None,
             }),
             list_api_document_url:
                 "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
@@ -31,7 +36,7 @@ pub(crate) fn new() -> Resource {
             get_api_document_url:
                 Some("https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html"),
             resource_url: Some(
-                "cloudwatch/home?#dashboards:name={dashboard_name}"
+                ResourceUrl::Regional("cloudwatch/home?#dashboards:name={dashboard_name}")
             ),
     },
     }
@@ -49,7 +54,11 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["list_dashboards_result"]["dashboard_entries"])
+        make_vec(
+            self,
+            &yaml["list_dashboards_result"]["dashboard_entries"],
+            "next_token",
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

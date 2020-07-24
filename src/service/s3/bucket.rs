@@ -12,19 +12,21 @@ pub(crate) fn new() -> Resource {
             service_name: "s3",
             resource_type_name: "bucket",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Get,
                 service_name: "s3",
-                action: None,
-                version: None,
                 iteration_tag: vec!["Bucket"],
                 limit: None,
+                token_name: "",
                 params: vec![],
+                region: None,
             }),
             list_api_document_url:
                 "https://docs.aws.amazon.com/ja_jp/AmazonS3/latest/API/API_ListBuckets.html",
             get_api: None,
             get_api_document_url: None,
-            resource_url: Some("s3/buckets/{bucket_name}/"),
+            resource_url: Some(ResourceUrl::Global("s3/buckets/{bucket_name}/")),
         },
     }
 }
@@ -41,7 +43,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["buckets"])
+        make_vec(self, &yaml["buckets"], "")
     }
 
     fn header(&self) -> Vec<&'static str> {

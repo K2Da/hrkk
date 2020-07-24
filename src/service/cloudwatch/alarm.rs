@@ -12,23 +12,28 @@ pub(crate) fn new() -> Resource {
             service_name: "cloudwatch",
             resource_type_name: "alarm",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "monitoring",
-                action: Some("DescribeAlarms"),
-                version: Some("2010-08-01"),
                 iteration_tag: vec!["member"],
                 limit: Some(Limit {
                     name: "MaxRecords",
                     max: 100,
                 }),
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "DescribeAlarms"),
+                    ("Version", "2010-08-01"),
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url:
                 "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
             get_api_document_url: None,
             resource_url: Some(
-                "cloudwatch/home?#alarmsV2:alarm/{alarm_name}"
+                ResourceUrl::Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")
             ),
         },
     }
@@ -61,7 +66,7 @@ impl AwsResource for Resource {
             .iter()
             .map(|y| (self.line(y, &None), y.clone()))
             .collect();
-        (vec, next_token(&yaml))
+        (vec, next_token(&yaml, "next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {

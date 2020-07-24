@@ -73,7 +73,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["sessions"])
+        make_vec(self, &yaml["sessions"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {

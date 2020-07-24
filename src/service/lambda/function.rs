@@ -26,7 +26,9 @@ pub(crate) fn new() -> Resource {
             list_api_document_url:
                 "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html",
             get_api_document_url: None,
-            resource_url: Some("lambda/home?#/functions/{function_name}"),
+            resource_url: Some(ResourceUrl::Regional(
+                "lambda/home?#/functions/{function_name}",
+            )),
         },
     }
 }
@@ -43,7 +45,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["functions"])
+        make_vec(self, &yaml["functions"], "next_marker")
     }
 
     fn header(&self) -> Vec<&'static str> {

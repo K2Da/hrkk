@@ -116,7 +116,7 @@ impl Commands {
                 }
 
                 if let Some(url) = &info.resource_url {
-                    section = section.str("resource uri", url);
+                    section = section.str("resource uri", &format!("{:?}", url));
                 }
 
                 if let Some(parameter_name) = &info.list_api.parameter_name() {

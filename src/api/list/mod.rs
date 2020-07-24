@@ -38,7 +38,7 @@ fn request(
     next_token: Option<String>,
 ) -> Result<SignedRequest> {
     match &resource.info().list_api {
-        ListApi::Xml(xml_api) => xml_helper::request(opts, next_token, xml_api),
+        ListApi::Xml(xml_api) => xml_helper::request(opts, next_token, parameter, xml_api),
         ListApi::Json(json_api) => json_helper::request(opts, next_token, parameter, json_api),
     }
 }
@@ -46,6 +46,7 @@ fn request(
 pub(crate) fn make_vec(
     resource: &dyn crate::service::AwsResource,
     yaml: &Yaml,
+    token_name: &'static str,
 ) -> (ResourceList, Option<String>) {
     if let Yaml::Array(items) = &yaml {
         return (
@@ -53,9 +54,9 @@ pub(crate) fn make_vec(
                 .iter()
                 .map(|y| (resource.line(y, &None), y.clone()))
                 .collect(),
-            next_token(&yaml),
+            next_token(&yaml, token_name),
         );
     }
 
-    (vec![], next_token(&yaml))
+    (vec![], next_token(&yaml, token_name))
 }

@@ -4,26 +4,33 @@ use rusoto_core::param::{Params, ServiceParams};
 pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
+    parameter: &Option<String>,
     xml_api: &XmlListApi,
 ) -> Result<SignedRequest> {
+    let region = if let Some(region) = xml_api.region.clone() {
+        region
+    } else {
+        opts.region()?
+    };
+
+    let mut path = xml_api.path.to_string();
+    if let Some(parameter) = parameter {
+        if let Some(place_holder) = xml_api.path_place_holder {
+            path = path.replace(place_holder, parameter);
+        }
+    }
+
     let mut request = SignedRequest::new(
         match xml_api.method {
             XmlListMethod::Get => "GET",
             XmlListMethod::Post => "POST",
         },
         xml_api.service_name,
-        &opts.region()?,
-        "/",
+        &region,
+        &path,
     );
+
     let mut params = Params::new();
-
-    if let Some(action) = xml_api.action {
-        params.put("Action", action);
-    }
-
-    if let Some(version) = xml_api.version {
-        params.put("Version", version);
-    }
 
     if let Some(Limit {
         name: parameter_name,
@@ -34,15 +41,20 @@ pub(crate) fn request(
     }
 
     if let Some(next_token) = next_token {
-        params.put("NextToken", next_token);
+        params.put(xml_api.token_name, next_token);
     }
 
     for (name, value) in &xml_api.params {
         params.put(name, value);
     }
 
-    request.set_payload(Some(serde_urlencoded::to_string(&params)?));
-    request.set_content_type("application/x-www-form-urlencoded".to_owned());
+    match xml_api.method {
+        XmlListMethod::Get => request.set_params(params),
+        XmlListMethod::Post => {
+            request.set_payload(Some(serde_urlencoded::to_string(&params)?));
+            request.set_content_type("application/x-www-form-urlencoded".to_owned());
+        }
+    }
 
     Ok(request)
 }

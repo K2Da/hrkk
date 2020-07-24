@@ -27,7 +27,7 @@ pub(crate) fn new() -> Resource {
             list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
             get_api_document_url: None,
             resource_url: Some(
-                "systems-manager/automation/execution/{execution_id}"
+                ResourceUrl::Regional("systems-manager/automation/execution/{execution_id}")
             ),
         },
     }
@@ -45,7 +45,11 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["automation_execution_metadata_list"])
+        make_vec(
+            self,
+            &yaml["automation_execution_metadata_list"],
+            "next_token",
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

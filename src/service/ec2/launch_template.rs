@@ -12,22 +12,27 @@ pub(crate) fn new() -> Resource {
             service_name: "ec2",
             resource_type_name: "launch_template",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "ec2",
-                action: Some("DescribeLaunchTemplates"),
-                version: Some("2016-11-15"),
                 iteration_tag: vec!["item"],
                 limit: Some(Limit {
                     name: "MaxResults",
                     max: 200,
                 }),
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "DescribeLaunchTemplates"),
+                    ("Version", "2016-11-15"),
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url:
                 "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeLaunchTemplates.html",
             get_api_document_url: None,
-            resource_url: Some("ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}"),
+            resource_url: Some(ResourceUrl::Regional("ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}")),
         },
     }
 }
@@ -44,7 +49,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["launch_templates"])
+        make_vec(self, &yaml["launch_templates"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {

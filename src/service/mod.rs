@@ -15,6 +15,7 @@ pub(crate) mod lambda;
 pub(crate) mod logs;
 pub(crate) mod prelude;
 pub(crate) mod rds;
+pub(crate) mod route53;
 pub(crate) mod s3;
 pub(crate) mod ssm;
 
@@ -36,6 +37,8 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(logs::log_group::new()),
         Box::new(logs::log_stream::new()),
         Box::new(rds::db_instance::new()),
+        Box::new(route53::hosted_zone::new()),
+        Box::new(route53::resource_record_set::new()),
         Box::new(s3::bucket::new()),
         Box::new(ssm::automation_execution::new()),
         Box::new(ssm::document::new()),
@@ -61,7 +64,13 @@ pub(crate) struct Info {
     pub(crate) list_api_document_url: &'static str,
     pub(crate) get_api: Option<GetApi>,
     pub(crate) get_api_document_url: Option<&'static str>,
-    pub(crate) resource_url: Option<&'static str>,
+    pub(crate) resource_url: Option<ResourceUrl>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub(crate) enum ResourceUrl {
+    Regional(&'static str),
+    Global(&'static str),
 }
 
 #[derive(Serialize, Clone)]
@@ -71,17 +80,17 @@ pub(crate) enum ListApi {
 }
 
 impl ListApi {
-    pub(crate) fn name(&self) -> &'static str {
+    pub(crate) fn name(&self) -> String {
         match self {
-            ListApi::Xml(api) => api.action.unwrap_or("-"),
+            ListApi::Xml(api) => format!("{} {:?}", api.path, api.params),
             ListApi::Json(JsonListApi {
                 method: JsonListMethod::Post { target },
                 ..
-            }) => target,
+            }) => target.to_string(),
             ListApi::Json(JsonListApi {
                 method: JsonListMethod::Get { path },
                 ..
-            }) => path,
+            }) => path.to_string(),
         }
     }
 
@@ -101,13 +110,15 @@ pub(crate) struct Limit {
 
 #[derive(Serialize, Clone)]
 pub(crate) struct XmlListApi {
+    pub(crate) path: &'static str,
+    pub(crate) path_place_holder: Option<&'static str>,
     pub(crate) method: XmlListMethod,
     pub(crate) service_name: &'static str,
-    pub(crate) action: Option<&'static str>,
-    pub(crate) version: Option<&'static str>,
     pub(crate) iteration_tag: Vec<&'static str>,
     pub(crate) limit: Option<Limit>,
+    pub(crate) token_name: &'static str,
     pub(crate) params: Vec<(&'static str, &'static str)>,
+    pub(crate) region: Option<rusoto_core::Region>,
 }
 
 #[derive(Serialize, Clone)]
@@ -210,8 +221,13 @@ pub(crate) trait AwsResource: Send + Sync {
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> crate::show::Section;
 
     fn console_url(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> String {
-        if let Some(resource_url) = self.info().resource_url {
-            let mut line = format!("https://{}.console.aws.amazon.com/{}", region, resource_url);
+        if let Some(resource_url) = &self.info().resource_url {
+            let mut line = match resource_url {
+                ResourceUrl::Regional(url) => {
+                    format!("https://{}.console.aws.amazon.com/{}", region, url)
+                }
+                ResourceUrl::Global(url) => format!("https://console.aws.amazon.com/{}", url),
+            };
             for (key, param) in self.url_params(list, get).unwrap_or(vec![]).iter() {
                 line = line.replace(
                     &("{".to_string() + &format!("{}", key) + "}"),
@@ -332,8 +348,8 @@ pub(crate) fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     &Yaml::BadValue
 }
 
-pub(crate) fn next_token(yaml: &Yaml) -> Option<String> {
-    match &yaml["next_token"] {
+pub(crate) fn next_token(yaml: &Yaml, token_name: &'static str) -> Option<String> {
+    match &yaml[token_name] {
         Yaml::String(token) => Some(token.to_owned()),
         _ => None,
     }

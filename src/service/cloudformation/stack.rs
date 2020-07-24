@@ -12,19 +12,24 @@ pub(crate) fn new() -> Resource {
             service_name: "cloudformation",
             resource_type_name: "stack",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "cloudformation",
-                action: Some("DescribeStacks"),
-                version: Some("2010-05-15"),
                 iteration_tag: vec!["member"],
                 limit: None,
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "DescribeStacks"),
+                    ("Version", "2010-05-15")
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url:
                 "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
             get_api_document_url: None,
-            resource_url: Some( "cloudformation/home?#/stacks/stackinfo?stackId={stack_id}"),
+            resource_url: Some(ResourceUrl::Regional("cloudformation/home?#/stacks/stackinfo?stackId={stack_id}")),
         },
     }
 }
@@ -41,7 +46,11 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["describe_stacks_result"]["stacks"])
+        make_vec(
+            self,
+            &yaml["describe_stacks_result"]["stacks"],
+            "next_token",
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

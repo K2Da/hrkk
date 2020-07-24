@@ -1,5 +1,4 @@
 use crate::service::prelude::*;
-use crate::service::resource_by_name;
 
 #[derive(Serialize)]
 pub(crate) struct Resource {
@@ -27,7 +26,7 @@ pub(crate) fn new() -> Resource {
             list_api_document_url:
             "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html",
             get_api_document_url: None,
-            resource_url: Some("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}"),
+            resource_url: Some(ResourceUrl::Regional("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}")),
         },
     }
 }
@@ -64,7 +63,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["log_streams"])
+        make_vec(self, &yaml["log_streams"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {

@@ -166,6 +166,13 @@ pub(crate) enum SubCommand {
         command: RdsCommand,
     },
 
+    /// Route53
+    #[structopt(name = "route53")]
+    Route53 {
+        #[structopt(subcommand)]
+        command: Route53Command,
+    },
+
     /// Systems Manager.
     #[structopt(name = "s3")]
     S3 {
@@ -261,6 +268,17 @@ pub(crate) enum AthenaCommand {
 pub(crate) enum AutoscalingCommand {
     #[structopt(name = "auto-scaling-group")]
     AutoScalingGroup,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum Route53Command {
+    #[structopt(name = "hosted-zone")]
+    HostedZone,
+    #[structopt(name = "resource-record-set")]
+    ResourceRecordSet {
+        /// hosted zone id
+        zone_id: Option<String>,
+    },
 }
 
 pub(crate) enum OutputType {

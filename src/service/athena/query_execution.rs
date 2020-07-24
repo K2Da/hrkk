@@ -31,7 +31,7 @@ pub(crate) fn new() -> Resource {
                 "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
             get_api_document_url:
                 Some("https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html"),
-            resource_url: Some("athena/home?#query/history/{execution_id}"),
+            resource_url: Some(ResourceUrl::Regional("athena/home?#query/history/{execution_id}")),
         },
     }
 }
@@ -48,7 +48,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["query_execution_ids"])
+        make_vec(self, &yaml["query_execution_ids"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {

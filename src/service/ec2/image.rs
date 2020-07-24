@@ -12,19 +12,27 @@ pub(crate) fn new() -> Resource {
             service_name: "ec2",
             resource_type_name: "image",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "ec2",
-                action: Some("DescribeImages"),
-                version: Some("2016-11-15"),
                 iteration_tag: vec!["item"],
                 limit: None,
-                params: vec![("Owner.1", "self")],
+                token_name: "NextToken",
+                params: vec![
+                    ("Owner.1", "self"),
+                    ("Action", "DescribeImages"),
+                    ("Version", "2016-11-15"),
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url:
                 "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html",
             get_api_document_url: None,
-            resource_url: Some("ec2/v2/home?#Images:imageId={image_id}"),
+            resource_url: Some(ResourceUrl::Regional(
+                "ec2/v2/home?#Images:imageId={image_id}",
+            )),
         },
     }
 }
@@ -41,7 +49,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["images_set"])
+        make_vec(self, &yaml["images_set"], "")
     }
 
     fn header(&self) -> Vec<&'static str> {

@@ -12,22 +12,26 @@ pub(crate) fn new() -> Resource {
             service_name: "rds",
             resource_type_name: "db_instance",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "rds",
-                action: Some("DescribeDBInstances"),
-                version: Some("2014-10-31"),
                 iteration_tag: vec!["Subnet", "DBInstance", "member"],
                 limit: Some(Limit {
                     name: "MaxResults",
                     max: 100,
                 }),
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "DescribeDBInstances"),
+                    ("Version", "2014-10-31"),
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url: "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html",
             get_api_document_url: None,
-            resource_url: Some("rds/home?#database:id={instance_id};is-cluster=false"
-            ),
+            resource_url: Some(ResourceUrl::Regional("rds/home?#database:id={instance_id};is-cluster=false")),
         },
     }
 }
@@ -44,7 +48,11 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["describe_db_instances_result"]["db_instances"])
+        make_vec(
+            self,
+            &yaml["describe_db_instances_result"]["db_instances"],
+            "marker",
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

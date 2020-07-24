@@ -12,13 +12,18 @@ pub(crate) fn new() -> Resource {
             service_name: "cloudwatch",
             resource_type_name: "metric",
             list_api: ListApi::Xml(XmlListApi {
+                path: "/",
+                path_place_holder: None,
                 method: XmlListMethod::Post,
                 service_name: "monitoring",
-                action: Some("ListMetrics"),
-                version: Some("2010-08-01"),
                 iteration_tag: vec!["member"],
                 limit: None,
-                params: vec![],
+                token_name: "NextToken",
+                params: vec![
+                    ("Action", "ListMetrics"),
+                    ("Version", "2010-08-01"),
+                ],
+                region: None,
             }),
             get_api: None,
             list_api_document_url:
@@ -41,7 +46,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["list_metrics_result"]["metrics"])
+        make_vec(self, &yaml["list_metrics_result"]["metrics"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {

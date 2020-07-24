@@ -26,7 +26,7 @@ pub(crate) fn new() -> Resource {
             list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
             get_api_document_url: None,
             resource_url: Some(
-                "systems-manager/documents/{name}"
+                ResourceUrl::Regional("systems-manager/documents/{name}")
             ),
         },
     }
@@ -44,7 +44,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["document_identifiers"])
+        make_vec(self, &yaml["document_identifiers"], "next_token")
     }
 
     fn header(&self) -> Vec<&'static str> {
