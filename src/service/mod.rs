@@ -12,6 +12,7 @@ pub(crate) mod cloudformation;
 pub(crate) mod cloudfront;
 pub(crate) mod cloudwatch;
 pub(crate) mod ec2;
+pub(crate) mod elasticache;
 pub(crate) mod lambda;
 pub(crate) mod logs;
 pub(crate) mod prelude;
@@ -35,6 +36,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(ec2::instance::new()),
         Box::new(ec2::launch_template::new()),
         Box::new(ec2::image::new()),
+        Box::new(elasticache::cache_cluster::new()),
         Box::new(lambda::function::new()),
         Box::new(logs::log_group::new()),
         Box::new(logs::log_stream::new()),
