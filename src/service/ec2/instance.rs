@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "ec2",
                 iteration_tag: vec!["item"],
                 limit: Some(Limit {
@@ -60,7 +60,7 @@ impl AwsResource for Resource {
             }
         }
 
-        (result, next_token(&yaml, "next_token"))
+        (result, next_token(&yaml, Some("next_token")))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -76,7 +76,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .tag_name("tag_set", "Name")
             .resource_url(self.console_url(list, get, region))
             .raw("instance_id")
@@ -84,19 +84,19 @@ impl AwsResource for Resource {
             .raw("architecture")
             .raw2("state", ("instance_state", "name"))
             .section(
-                Section::new(&list)
+                Section::new(list)
                     .string_name("tags")
                     .yaml_pairs("tag_set", ("key", "value")),
             )
             .section(
-                Section::new(&list)
+                Section::new(list)
                     .string_name("network")
                     .raw("subnet_id")
                     .raw("private_ip_address")
                     .raw2("availability zone", ("placement", "availability_zone")),
             )
             .section(
-                Section::new(&list)
+                Section::new(list)
                     .string_name("device")
                     .raw("root_device_type")
                     .raw("root_device_name"),

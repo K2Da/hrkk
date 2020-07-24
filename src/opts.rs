@@ -159,6 +159,13 @@ pub(crate) enum SubCommand {
         command: ElasticacheCommand,
     },
 
+    /// Es
+    #[structopt(name = "es")]
+    Es {
+        #[structopt(subcommand)]
+        command: EsCommand,
+    },
+
     /// Lambda
     #[structopt(name = "lambda")]
     Lambda {
@@ -216,6 +223,12 @@ pub(crate) enum Ec2Command {
 pub(crate) enum ElasticacheCommand {
     #[structopt(name = "cache-cluster")]
     CacheCluster,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum EsCommand {
+    #[structopt(name = "domain")]
+    Domain,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]

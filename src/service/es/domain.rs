@@ -1,0 +1,94 @@
+use crate::service::prelude::*;
+
+#[derive(Serialize)]
+pub(crate) struct Resource {
+    info: Info,
+}
+
+pub(crate) fn new() -> Resource {
+    Resource {
+        info: Info {
+            key_attribute: "domain_name",
+            service_name: "es",
+            resource_type_name: "domain",
+            list_api: ListApi::Json(JsonListApi {
+                method: JsonListMethod::Get {
+                    path: "/2015-01-01/domain",
+                },
+                service_name: "es",
+                json: json!({}),
+                limit: None,
+                token_name: None,
+                parameter_name: None,
+            }),
+            get_api: Some(GetApi::Json(JsonGetApi {
+                method: Method::Get,
+                path: "/2015-01-01/es/domain/{domain_name}",
+                path_place_holder: Some("{domain_name}"),
+                service_name: "es",
+                target: None,
+                parameter_name: None,
+            })),
+            list_api_document_url: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames",
+            get_api_document_url: Some("https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain"),
+            resource_url: Some(ResourceUrl::Regional(
+                "es/home?#domain:resource={domain_name};action=dashboard",
+            )),
+        },
+    }
+}
+
+impl AwsResource for Resource {
+    fn info(&self) -> &Info {
+        &self.info
+    }
+
+    fn matching_sub_command(&self) -> Option<SubCommand> {
+        Some(SubCommand::Es {
+            command: EsCommand::Domain,
+        })
+    }
+
+    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        make_vec(self, &yaml["domain_names"], None)
+    }
+
+    fn header(&self) -> Vec<&'static str> {
+        vec!["name", "version"]
+    }
+
+    fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
+        match get {
+            Some(get) => vec![
+                show::raw(&get["domain_status"]["domain_name"]),
+                show::raw(&get["domain_status"]["elasticsearch_version"]),
+            ],
+            None => vec![show::raw(&list["domain_name"]), "-".to_string()],
+        }
+    }
+
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        match get {
+            None => Section::new(list).yaml_name("domain_name"),
+            Some(yaml) => Section::new(&yaml["domain_status"])
+                .resource_url(self.console_url(list, get, region))
+                .yaml_name("domain_name")
+                .raw("arn")
+                .section(
+                    Section::new(&yaml["domain_status"]["elasticsearch_cluster_config"])
+                        .string_name("cluster config")
+                        .raw("instance_type")
+                        .raw("instance_count"),
+                )
+                .section(
+                    Section::new(&yaml["domain_status"]["vpc_options"])
+                        .string_name("vpc options")
+                        .raw("availability_zones"),
+                ),
+        }
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+        Some(vec![("domain_name", show::raw(&list["domain_name"]))])
+    }
+}

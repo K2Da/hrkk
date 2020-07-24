@@ -5,8 +5,8 @@ pub(crate) use crate::opts::Opts;
 pub(crate) use crate::opts::*;
 pub(crate) use crate::service::{
     merge_yamls, next_token, resource_by_name, tag_value, AwsResource, ExecuteTarget, GetApi, Info,
-    JsonGetApi, JsonListApi, JsonListMethod, Limit, ListApi, ResourceList, ResourceUrl, XmlGetApi,
-    XmlListApi, XmlListMethod,
+    JsonGetApi, JsonListApi, JsonListMethod, Limit, ListApi, Method, ResourceList, ResourceUrl,
+    XmlGetApi, XmlListApi,
 };
 pub(crate) use crate::show;
 pub(crate) use crate::show::Section;

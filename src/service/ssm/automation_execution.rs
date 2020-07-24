@@ -17,10 +17,9 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "ssm",
                 json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
+                limit: Some(Limit { name:"MaxResults", max: 50}),
+                token_name: Some("NextToken"),
                 parameter_name: None,
-                max_limit: 50,
             }),
             get_api: None,
 
@@ -48,7 +47,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["automation_execution_metadata_list"],
-            "next_token",
+            Some("next_token"),
         )
     }
 
@@ -66,7 +65,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("automation_execution_id")
             .resource_url(self.console_url(list, get, region))
             .raw1("status", "automation_execution_status")

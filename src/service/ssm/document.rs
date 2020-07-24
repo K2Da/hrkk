@@ -17,10 +17,9 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "ssm",
                 json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
+                limit: Some(Limit { name: "MaxResults", max: 50 }),
+                token_name: Some("NextToken"),
                 parameter_name: None,
-                max_limit: 50,
             }),
             get_api: None,
             list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
@@ -44,7 +43,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["document_identifiers"], "next_token")
+        make_vec(self, &yaml["document_identifiers"], Some("next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -60,7 +59,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("name")
             .resource_url(self.console_url(list, get, region))
             .raw("document_format")
@@ -69,7 +68,7 @@ impl AwsResource for Resource {
             .raw("schema_version")
             .raw("target_type")
             .section(
-                Section::new(&list)
+                Section::new(list)
                     .string_name("platform types")
                     .raw_array("platform_types"),
             )

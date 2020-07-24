@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "monitoring",
                 iteration_tag: vec!["member"],
                 limit: None,
@@ -46,7 +46,11 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["list_metrics_result"]["metrics"], "next_token")
+        make_vec(
+            self,
+            &yaml["list_metrics_result"]["metrics"],
+            Some("next_token"),
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

@@ -8,13 +8,18 @@ pub(crate) fn request(
     json_api: &JsonListApi,
 ) -> Result<SignedRequest> {
     let mut map = json_api.json_map()?;
-    map.insert(
-        json_api.limit_name.to_string(),
-        Value::Number(serde_json::Number::from_f64(json_api.max_limit as f64).unwrap()),
-    );
 
-    if let Some(next_token) = next_token {
-        map.insert(json_api.token_name.to_string(), Value::String(next_token));
+    if let Some(limit) = &json_api.limit {
+        map.insert(
+            limit.name.to_string(),
+            Value::Number(serde_json::Number::from_f64(limit.max as f64).unwrap()),
+        );
+    }
+
+    if let Some(token_name) = json_api.token_name {
+        if let Some(next_token) = next_token {
+            map.insert(token_name.to_string(), Value::String(next_token));
+        }
     }
 
     if let Some(parameter) = parameter {

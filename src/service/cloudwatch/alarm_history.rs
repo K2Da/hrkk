@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "monitoring",
                 iteration_tag: vec!["member"],
                 limit: Some(Limit {
@@ -54,7 +54,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["describe_alarm_history_result"]["alarm_history_items"],
-            "next_token",
+            Some("next_token"),
         )
     }
 
@@ -71,7 +71,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("alarm_name")
             .resource_url(self.console_url(list, get, region))
             .raw("alarm_type")

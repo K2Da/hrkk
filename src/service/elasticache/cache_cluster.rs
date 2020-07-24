@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Get,
+                method: Method::Get,
                 service_name: "elasticache",
                 iteration_tag: vec!["CacheCluster", "Member"],
                 limit: Some(Limit {
@@ -52,7 +52,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["describe_cache_clusters_result"]["cache_clusters"],
-            "marker",
+            Some("marker"),
         )
     }
 
@@ -68,7 +68,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, _get: &Option<Yaml>, _region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("cache_cluster_id")
             .raw("engine")
             .raw("cache_cluster_status")

@@ -17,6 +17,10 @@ pub(crate) async fn call(resource: &dyn AwsResource, parameter: &str, opts: &Opt
         _ => Yaml::BadValue,
     };
 
+    if opts.debug {
+        crate::api::file::store_yaml(&yaml, "get")?;
+    }
+
     Ok(yaml.clone())
 }
 

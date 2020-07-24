@@ -17,10 +17,9 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "ssm",
                 json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
+                limit: Some(Limit { name: "MaxResults", max: 200}),
+                token_name: Some("NextToken"),
                 parameter_name: Some("State"),
-                max_limit: 200,
             }),
             get_api: None,
             list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
@@ -73,7 +72,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["sessions"], "next_token")
+        make_vec(self, &yaml["sessions"], Some("next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {

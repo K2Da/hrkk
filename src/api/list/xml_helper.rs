@@ -22,8 +22,8 @@ pub(crate) fn request(
 
     let mut request = SignedRequest::new(
         match xml_api.method {
-            XmlListMethod::Get => "GET",
-            XmlListMethod::Post => "POST",
+            Method::Get => "GET",
+            Method::Post => "POST",
         },
         xml_api.service_name,
         &region,
@@ -49,8 +49,8 @@ pub(crate) fn request(
     }
 
     match xml_api.method {
-        XmlListMethod::Get => request.set_params(params),
-        XmlListMethod::Post => {
+        Method::Get => request.set_params(params),
+        Method::Post => {
             request.set_payload(Some(serde_urlencoded::to_string(&params)?));
             request.set_content_type("application/x-www-form-urlencoded".to_owned());
         }

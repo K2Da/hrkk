@@ -17,10 +17,12 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "lambda",
                 json: json!({ "descending": Some(true) }),
-                limit_name: "MaxItems",
-                token_name: "Marker",
+                limit: Some(Limit {
+                    name: "MaxItems",
+                    max: 10000,
+                }),
+                token_name: Some("Marker"),
                 parameter_name: None,
-                max_limit: 10000,
             }),
             get_api: None,
             list_api_document_url:
@@ -45,7 +47,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["functions"], "next_marker")
+        make_vec(self, &yaml["functions"], Some("next_marker"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -60,7 +62,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("function_name")
             .resource_url(self.console_url(list, get, region))
             .raw("runtime")

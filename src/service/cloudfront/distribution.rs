@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/2020-05-31/distribution",
                 path_place_holder: None,
-                method: XmlListMethod::Get,
+                method: Method::Get,
                 service_name: "cloudfront",
                 iteration_tag: vec!["DistributionSummary", "SslProtocol", "Method", "Name", "Origin"],
                 limit: Some(Limit {
@@ -47,7 +47,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["items"], "marker")
+        make_vec(self, &yaml["items"], Some("marker"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -59,7 +59,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("id")
             .resource_url(self.console_url(list, get, region))
             .raw("status")

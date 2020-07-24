@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "autoscaling",
                 iteration_tag: vec!["member"],
                 limit: Some(Limit {
@@ -52,7 +52,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["describe_auto_scaling_groups_result"]["auto_scaling_groups"],
-            "next_token",
+            Some("next_token"),
         )
     }
 
@@ -68,7 +68,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("auto_scaling_group_name")
             .resource_url(self.console_url(list, get, region))
             .raw("desired_capacity")

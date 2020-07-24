@@ -17,15 +17,17 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "athena",
                 json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
+                limit: Some(Limit { name: "MaxResults", max: 50 }),
+                token_name: Some("NextToken"),
                 parameter_name: None,
-                max_limit: 50,
             }),
             get_api: Some(GetApi::Json(JsonGetApi{
+                method: Method::Post,
+                path: "/",
+                path_place_holder: None,
                 service_name: "athena",
-                target: "AmazonAthena.GetQueryExecution",
-                parameter_name: "QueryExecutionId",
+                target: Some("AmazonAthena.GetQueryExecution"),
+                parameter_name: Some("QueryExecutionId"),
             })),
             list_api_document_url:
                 "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
@@ -48,7 +50,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["query_execution_ids"], "next_token")
+        make_vec(self, &yaml["query_execution_ids"], Some("next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {

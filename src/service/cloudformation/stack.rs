@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "cloudformation",
                 iteration_tag: vec!["member"],
                 limit: None,
@@ -49,7 +49,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["describe_stacks_result"]["stacks"],
-            "next_token",
+            Some("next_token"),
         )
     }
 
@@ -66,7 +66,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("stack_name")
             .resource_url(self.console_url(list, get, region))
             .raw1("status", "stack_status")

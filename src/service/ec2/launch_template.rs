@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "ec2",
                 iteration_tag: vec!["item"],
                 limit: Some(Limit {
@@ -49,7 +49,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["launch_templates"], "next_token")
+        make_vec(self, &yaml["launch_templates"], Some("next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -65,7 +65,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("launch_template_name")
             .resource_url(self.console_url(list, get, region))
             .raw("template_id")

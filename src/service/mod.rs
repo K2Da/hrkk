@@ -13,6 +13,7 @@ pub(crate) mod cloudfront;
 pub(crate) mod cloudwatch;
 pub(crate) mod ec2;
 pub(crate) mod elasticache;
+pub(crate) mod es;
 pub(crate) mod lambda;
 pub(crate) mod logs;
 pub(crate) mod prelude;
@@ -37,6 +38,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(ec2::launch_template::new()),
         Box::new(ec2::image::new()),
         Box::new(elasticache::cache_cluster::new()),
+        Box::new(es::domain::new()),
         Box::new(lambda::function::new()),
         Box::new(logs::log_group::new()),
         Box::new(logs::log_stream::new()),
@@ -116,7 +118,7 @@ pub(crate) struct Limit {
 pub(crate) struct XmlListApi {
     pub(crate) path: &'static str,
     pub(crate) path_place_holder: Option<&'static str>,
-    pub(crate) method: XmlListMethod,
+    pub(crate) method: Method,
     pub(crate) service_name: &'static str,
     pub(crate) iteration_tag: Vec<&'static str>,
     pub(crate) limit: Option<Limit>,
@@ -126,9 +128,18 @@ pub(crate) struct XmlListApi {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) enum XmlListMethod {
+pub(crate) enum Method {
     Post,
     Get,
+}
+
+impl Method {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            Method::Post => "POST",
+            Method::Get => "GET",
+        }
+    }
 }
 
 #[derive(Serialize, Clone)]
@@ -136,10 +147,9 @@ pub(crate) struct JsonListApi {
     pub(crate) method: JsonListMethod,
     pub(crate) service_name: &'static str,
     pub(crate) json: serde_json::Value,
-    pub(crate) limit_name: &'static str,
-    pub(crate) token_name: &'static str,
+    pub(crate) limit: Option<Limit>,
+    pub(crate) token_name: Option<&'static str>,
     pub(crate) parameter_name: Option<&'static str>,
-    pub(crate) max_limit: i64,
 }
 
 #[derive(Serialize, Clone)]
@@ -168,7 +178,11 @@ impl GetApi {
     pub(crate) fn name(&self) -> &'static str {
         match self {
             GetApi::Xml(api) => api.action,
-            GetApi::Json(JsonGetApi { target, .. }) => target,
+            GetApi::Json(JsonGetApi {
+                target: Some(target),
+                ..
+            }) => target,
+            _ => "-",
         }
     }
 }
@@ -183,9 +197,12 @@ pub(crate) struct XmlGetApi {
 
 #[derive(Serialize, Clone)]
 pub(crate) struct JsonGetApi {
+    pub(crate) method: Method,
+    pub(crate) path: &'static str,
+    pub(crate) path_place_holder: Option<&'static str>,
     pub(crate) service_name: &'static str,
-    pub(crate) target: &'static str,
-    pub(crate) parameter_name: &'static str,
+    pub(crate) target: Option<&'static str>,
+    pub(crate) parameter_name: Option<&'static str>,
 }
 
 impl Clone for Box<dyn AwsResource> {
@@ -295,12 +312,13 @@ pub(crate) trait AwsResource: Send + Sync {
     }
 
     fn max_limit(&self) -> String {
-        match self.info().list_api {
+        match &self.info().list_api {
             ListApi::Xml(XmlListApi {
-                limit: Some(Limit { max: max_limit, .. }),
-                ..
-            }) => format!("{}", max_limit),
-            ListApi::Json(JsonListApi { max_limit, .. }) => format!("{}", max_limit),
+                limit: Some(limit), ..
+            }) => format!("{}: {}", limit.name, limit.max),
+            ListApi::Json(JsonListApi {
+                limit: Some(limit), ..
+            }) => format!("{}: {}", limit.name, limit.max),
             _ => "-".to_owned(),
         }
     }
@@ -352,11 +370,13 @@ pub(crate) fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     &Yaml::BadValue
 }
 
-pub(crate) fn next_token(yaml: &Yaml, token_name: &'static str) -> Option<String> {
-    match &yaml[token_name] {
-        Yaml::String(token) => Some(token.to_owned()),
-        _ => None,
+pub(crate) fn next_token(yaml: &Yaml, token_name: Option<&'static str>) -> Option<String> {
+    if let Some(token_name) = token_name {
+        if let Yaml::String(token) = &yaml[token_name] {
+            return Some(token.to_owned());
+        }
     }
+    None
 }
 
 pub(crate) fn merge_yamls(yaml: &Yaml, get_yaml: &Yaml) -> Yaml {

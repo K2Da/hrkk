@@ -17,10 +17,9 @@ pub(crate) fn new() -> Resource {
                 },
                 service_name: "logs",
                 json: json!({ "descending": Some(true), "orderBy": Some("LastEventTime".to_owned()) }),
-                limit_name: "limit",
-                token_name: "nextToken",
+                limit: Some(Limit { name: "limit", max: 50}),
+                token_name: Some("nextToken"),
                 parameter_name: Some("logGroupName"),
-                max_limit: 50,
             }),
             get_api: None,
             list_api_document_url:
@@ -63,7 +62,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["log_streams"], "next_token")
+        make_vec(self, &yaml["log_streams"], Some("next_token"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -81,7 +80,7 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("log_stream_name")
             .resource_url(self.console_url(list, get, region))
             .raw("arn")
@@ -93,7 +92,7 @@ impl AwsResource for Resource {
             .time("last_ingestion_time")
             .raw("upload_sequence_token")
             .section(
-                Section::new(&list).string_name("path").string_attributes(
+                Section::new(list).string_name("path").string_attributes(
                     show::raw(&list["log_stream_name"])
                         .split("/")
                         .enumerate()

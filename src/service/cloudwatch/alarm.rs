@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "monitoring",
                 iteration_tag: vec!["member"],
                 limit: Some(Limit {
@@ -66,7 +66,7 @@ impl AwsResource for Resource {
             .iter()
             .map(|y| (self.line(y, &None), y.clone()))
             .collect();
-        (vec, next_token(&yaml, "next_token"))
+        (vec, next_token(&yaml, Some("next_token")))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -81,13 +81,13 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
-        Section::new(&list)
+        Section::new(list)
             .yaml_name("alarm_name")
             .resource_url(self.console_url(list, get, region))
             .raw("namespace")
             .raw("alarm_description")
             .section(
-                Section::new(&list)
+                Section::new(list)
                     .string_name("state")
                     .raw1("value", "state_value")
                     .raw1("reason", "state_reason")

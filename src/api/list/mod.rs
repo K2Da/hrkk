@@ -25,7 +25,7 @@ pub(crate) async fn call(
     };
 
     if opts.debug {
-        crate::api::file::store_yaml(&yaml, &"response_body")?;
+        crate::api::file::store_yaml(&yaml, "list")?;
     }
 
     Ok(resource.make_vec(&yaml))
@@ -46,7 +46,7 @@ fn request(
 pub(crate) fn make_vec(
     resource: &dyn crate::service::AwsResource,
     yaml: &Yaml,
-    token_name: &'static str,
+    token_name: Option<&'static str>,
 ) -> (ResourceList, Option<String>) {
     if let Yaml::Array(items) = &yaml {
         return (

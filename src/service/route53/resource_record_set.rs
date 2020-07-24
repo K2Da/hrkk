@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/2013-04-01/hostedzone/{zone_id}/rrset",
                 path_place_holder: Some("{zone_id}"),
-                method: XmlListMethod::Get,
+                method: Method::Get,
                 service_name: "route53",
                 iteration_tag: vec!["ResourceRecordSet", "ResourceRecord"],
                 limit: Some(Limit {
@@ -67,7 +67,7 @@ impl AwsResource for Resource {
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["resource_record_sets"], "marker")
+        make_vec(self, &yaml["resource_record_sets"], Some("marker"))
     }
 
     fn header(&self) -> Vec<&'static str> {
@@ -79,6 +79,6 @@ impl AwsResource for Resource {
     }
 
     fn detail(&self, list: &Yaml, _get: &Option<Yaml>, _region: &str) -> Section {
-        Section::new(&list).yaml_name("name").raw("type").raw("ttl")
+        Section::new(list).yaml_name("name").raw("type").raw("ttl")
     }
 }

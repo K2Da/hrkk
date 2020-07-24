@@ -14,7 +14,7 @@ pub(crate) fn new() -> Resource {
             list_api: ListApi::Xml(XmlListApi {
                 path: "/",
                 path_place_holder: None,
-                method: XmlListMethod::Post,
+                method: Method::Post,
                 service_name: "monitoring",
                 iteration_tag: vec!["member"],
                 limit: None,
@@ -57,7 +57,7 @@ impl AwsResource for Resource {
         make_vec(
             self,
             &yaml["list_dashboards_result"]["dashboard_entries"],
-            "next_token",
+            Some("next_token"),
         )
     }
 
@@ -93,7 +93,7 @@ impl AwsResource for Resource {
                     .time2("last modified", ("list", "last_modified"))
                     .raw3("body", ("get", "get_dashboard_result", "dashboard_body"))
             }
-            None => Section::new(&list)
+            None => Section::new(list)
                 .yaml_name("dashboard_name")
                 .byte("size")
                 .time("last_modified"),
