@@ -8,22 +8,23 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "session_id",
+            key_attribute: Some("session_id"),
             service_name: "ssm",
             resource_type_name: "session",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Post {
-                    target: "AmazonSSM.DescribeSessions",
-                },
-                service_name: "ssm",
-                json: json!({}),
-                limit: Some(Limit { name: "MaxResults", max: 200}),
-                token_name: Some("NextToken"),
-                parameter_name: Some("State"),
-            }),
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "AmazonSSM.DescribeSessions",
+                    },
+                    service_name: "ssm",
+                    json: json!({}),
+                    limit: Some(Limit { name: "MaxResults", max: 200 }),
+                    token_name: Some("NextToken"),
+                    parameter_name: Some("State"),
+                }),
+                document: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
+            },
             get_api: None,
-            list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeSessions.html",
-            get_api_document_url: None,
             resource_url: None,
         },
     }

@@ -8,24 +8,23 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "log_group_name",
+            key_attribute: Some("log_group_name"),
             service_name: "logs",
             resource_type_name: "log_group",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Post {
-                    target: "Logs_20140328.DescribeLogGroups",
-                },
-                service_name: "logs",
-                json: json!({}),
-                limit: Some(Limit { name : "limit", max: 50}),
-                token_name: Some("nextToken"),
-                parameter_name: None,
-            }),
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "Logs_20140328.DescribeLogGroups",
+                    },
+                    service_name: "logs",
+                    json: json!({}),
+                    limit: Some(Limit { name: "limit", max: 50 }),
+                    token_name: Some("nextToken"),
+                    parameter_name: None,
+                }),
+                document: "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html",
+            },
             get_api: None,
-
-            list_api_document_url:
-            "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional("cloudwatch/home?#logsV2:log-groups/log-group/{log_group_name}"))
         },
     }

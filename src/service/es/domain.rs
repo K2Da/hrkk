@@ -8,29 +8,33 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "domain_name",
+            key_attribute: Some("domain_name"),
             service_name: "es",
             resource_type_name: "domain",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Get {
-                    path: "/2015-01-01/domain",
-                },
-                service_name: "es",
-                json: json!({}),
-                limit: None,
-                token_name: None,
-                parameter_name: None,
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Get {
+                        path: "/2015-01-01/domain",
+                    },
+                    service_name: "es",
+                    json: json!({}),
+                    limit: None,
+                    token_name: None,
+                    parameter_name: None,
+                }),
+                document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames",
+            },
+            get_api: Some(GetApi {
+                format: GetFormat::Json(GetJson {
+                    method: Method::Get,
+                    path: "/2015-01-01/es/domain/{domain_name}",
+                    path_place_holder: Some("{domain_name}"),
+                    service_name: "es",
+                    target: None,
+                    parameter_name: None,
+                }),
+                document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain",
             }),
-            get_api: Some(GetApi::Json(JsonGetApi {
-                method: Method::Get,
-                path: "/2015-01-01/es/domain/{domain_name}",
-                path_place_holder: Some("{domain_name}"),
-                service_name: "es",
-                target: None,
-                parameter_name: None,
-            })),
-            list_api_document_url: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames",
-            get_api_document_url: Some("https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain"),
             resource_url: Some(ResourceUrl::Regional(
                 "es/home?#domain:resource={domain_name};action=dashboard",
             )),
@@ -73,7 +77,10 @@ impl AwsResource for Resource {
             Some(yaml) => Section::new(&yaml["domain_status"])
                 .resource_url(self.console_url(list, get, region))
                 .yaml_name("domain_name")
+                .raw("elasticsearch_version")
                 .raw("arn")
+                .raw("created")
+                .raw("deleted")
                 .section(
                     Section::new(&yaml["domain_status"]["elasticsearch_cluster_config"])
                         .string_name("cluster config")
@@ -83,7 +90,7 @@ impl AwsResource for Resource {
                 .section(
                     Section::new(&yaml["domain_status"]["vpc_options"])
                         .string_name("vpc options")
-                        .raw("availability_zones"),
+                        .yaml_array("availability zones", "availability_zones"),
                 ),
         }
     }

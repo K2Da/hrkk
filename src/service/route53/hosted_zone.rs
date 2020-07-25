@@ -8,28 +8,27 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "id",
+            key_attribute: Some("id"),
             service_name: "route53",
             resource_type_name: "hosted_zone",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/2013-04-01/hostedzone",
-                path_place_holder: None,
-                method: Method::Get,
-                service_name: "route53",
-                iteration_tag: vec!["HostedZone"],
-                limit: Some(Limit {
-                    name: "maxitems",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/2013-04-01/hostedzone",
+                    path_place_holder: None,
+                    method: Method::Get,
+                    service_name: "route53",
+                    iteration_tag: vec!["HostedZone"],
+                    limit: Some(Limit {
+                        name: "maxitems",
+                        max: 100,
+                    }),
+                    token_name: "marker",
+                    params: vec![],
+                    region: Some(Region::UsEast1),
                 }),
-                token_name: "marker",
-                params: vec![],
-                region: Some(Region::UsEast1),
-            }),
+                document: "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html",
+            },
             get_api: None,
-
-            list_api_document_url:
-                "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Global(
                 "route53/home?#resource-record-sets:{zone_id}",
             )),

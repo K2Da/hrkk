@@ -5,7 +5,7 @@ pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
     parameter: &Option<String>,
-    json_api: &JsonListApi,
+    json_api: &ListJson,
 ) -> Result<SignedRequest> {
     let mut map = json_api.json_map()?;
 

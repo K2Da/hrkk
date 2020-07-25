@@ -8,27 +8,27 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "metric_name",
+            key_attribute: Some("metric_name"),
             service_name: "cloudwatch",
             resource_type_name: "metric",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "monitoring",
-                iteration_tag: vec!["member"],
-                limit: None,
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "ListMetrics"),
-                    ("Version", "2010-08-01"),
-                ],
-                region: None,
-            }),
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "monitoring",
+                    iteration_tag: vec!["member"],
+                    limit: None,
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "ListMetrics"),
+                        ("Version", "2010-08-01"),
+                    ],
+                    region: None,
+                }),
+                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html",
+            },
             get_api: None,
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html",
-            get_api_document_url: None,
             resource_url: None,
         },
     }

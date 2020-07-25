@@ -8,30 +8,30 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "alarm_arn",
+            key_attribute: Some("alarm_arn"),
             service_name: "cloudwatch",
             resource_type_name: "alarm",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "monitoring",
-                iteration_tag: vec!["member"],
-                limit: Some(Limit {
-                    name: "MaxRecords",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "monitoring",
+                    iteration_tag: vec!["member"],
+                    limit: Some(Limit {
+                        name: "MaxRecords",
+                        max: 100,
+                    }),
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "DescribeAlarms"),
+                        ("Version", "2010-08-01"),
+                    ],
+                    region: None,
                 }),
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "DescribeAlarms"),
-                    ("Version", "2010-08-01"),
-                ],
-                region: None,
-            }),
+                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
+            },
             get_api: None,
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
-            get_api_document_url: None,
             resource_url: Some(
                 ResourceUrl::Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")
             ),

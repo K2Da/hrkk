@@ -8,29 +8,30 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "db_instance_identifier",
+            key_attribute: Some("db_instance_identifier"),
             service_name: "rds",
             resource_type_name: "db_instance",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "rds",
-                iteration_tag: vec!["Subnet", "DBInstance", "member"],
-                limit: Some(Limit {
-                    name: "MaxResults",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "rds",
+                    iteration_tag: vec!["Subnet", "DBInstance", "member"],
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 100,
+                    }),
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "DescribeDBInstances"),
+                        ("Version", "2014-10-31"),
+                    ],
+                    region: None,
                 }),
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "DescribeDBInstances"),
-                    ("Version", "2014-10-31"),
-                ],
-                region: None,
-            }),
+                document: "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html",
+            },
             get_api: None,
-            list_api_document_url: "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional("rds/home?#database:id={instance_id};is-cluster=false")),
         },
     }

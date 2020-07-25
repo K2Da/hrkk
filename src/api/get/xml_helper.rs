@@ -1,7 +1,7 @@
 use crate::service::prelude::*;
 use rusoto_core::param::{Params, ServiceParams};
 
-pub(crate) fn request(opts: &Opts, parameter: &str, xml_api: &XmlGetApi) -> Result<SignedRequest> {
+pub(crate) fn request(opts: &Opts, parameter: &str, xml_api: &GetXml) -> Result<SignedRequest> {
     let mut request = SignedRequest::new("POST", xml_api.service_name, &opts.region()?, "/");
     let mut params = Params::new();
 

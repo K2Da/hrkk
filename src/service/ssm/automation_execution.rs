@@ -8,23 +8,23 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "AutomationExecutionId",
+            key_attribute: Some("automation_execution_id"),
             service_name: "ssm",
             resource_type_name: "automation_execution",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Post {
-                    target: "AmazonSSM.DescribeAutomationExecutions",
-                },
-                service_name: "ssm",
-                json: json!({}),
-                limit: Some(Limit { name:"MaxResults", max: 50}),
-                token_name: Some("NextToken"),
-                parameter_name: None,
-            }),
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "AmazonSSM.DescribeAutomationExecutions",
+                    },
+                    service_name: "ssm",
+                    json: json!({}),
+                    limit: Some(Limit { name: "MaxResults", max: 50 }),
+                    token_name: Some("NextToken"),
+                    parameter_name: None,
+                }),
+                document: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
+            },
             get_api: None,
-
-            list_api_document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
-            get_api_document_url: None,
             resource_url: Some(
                 ResourceUrl::Regional("systems-manager/automation/execution/{execution_id}")
             ),

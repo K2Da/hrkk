@@ -8,28 +8,27 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "name",
+            key_attribute: Some("name"),
             service_name: "route53",
             resource_type_name: "resource_record_set",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/2013-04-01/hostedzone/{zone_id}/rrset",
-                path_place_holder: Some("{zone_id}"),
-                method: Method::Get,
-                service_name: "route53",
-                iteration_tag: vec!["ResourceRecordSet", "ResourceRecord"],
-                limit: Some(Limit {
-                    name: "maxitems",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/2013-04-01/hostedzone/{zone_id}/rrset",
+                    path_place_holder: Some("{zone_id}"),
+                    method: Method::Get,
+                    service_name: "route53",
+                    iteration_tag: vec!["ResourceRecordSet", "ResourceRecord"],
+                    limit: Some(Limit {
+                        name: "maxitems",
+                        max: 100,
+                    }),
+                    token_name: "NextRecordName",
+                    params: vec![],
+                    region: Some(Region::UsEast1),
                 }),
-                token_name: "NextRecordName",
-                params: vec![],
-                region: Some(Region::UsEast1),
-            }),
+                document: "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html",
+            },
             get_api: None,
-
-            list_api_document_url:
-                "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html",
-            get_api_document_url: None,
             resource_url: None,
         },
     }

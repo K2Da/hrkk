@@ -8,26 +8,26 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "",
+            key_attribute: Some("function_name"),
             service_name: "lambda",
             resource_type_name: "function",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Get {
-                    path: "/2015-03-31/functions/",
-                },
-                service_name: "lambda",
-                json: json!({ "descending": Some(true) }),
-                limit: Some(Limit {
-                    name: "MaxItems",
-                    max: 10000,
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Get {
+                        path: "/2015-03-31/functions/",
+                    },
+                    service_name: "lambda",
+                    json: json!({ "descending": Some(true) }),
+                    limit: Some(Limit {
+                        name: "MaxItems",
+                        max: 10000,
+                    }),
+                    token_name: Some("Marker"),
+                    parameter_name: None,
                 }),
-                token_name: Some("Marker"),
-                parameter_name: None,
-            }),
+                document: "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html",
+            },
             get_api: None,
-            list_api_document_url:
-                "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional(
                 "lambda/home?#/functions/{function_name}",
             )),

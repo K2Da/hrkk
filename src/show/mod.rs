@@ -202,18 +202,31 @@ impl Section {
         self
     }
 
-    pub(crate) fn yaml_pairs(mut self, root: &str, key_value: (&str, &str)) -> Self {
-        match &self.yaml[root] {
-            Yaml::Array(array) => {
-                for y in array {
-                    let (name, value) = (y[key_value.0].clone(), y[key_value.1].clone());
-                    self.children.push(Child::Attribute(Attribute {
-                        name: Name::Yaml(name.clone()),
-                        value: raw(&value.clone()),
-                    }));
-                }
+    pub(crate) fn yaml_array(mut self, name: &str, root: &str) -> Self {
+        if let Yaml::Array(array) = &self.yaml[root] {
+            for (i, y) in array.iter().enumerate() {
+                self.children.push(Child::Attribute(Attribute {
+                    name: Name::Yaml(Yaml::String(if i == 0 {
+                        name.to_string()
+                    } else {
+                        "".to_string()
+                    })),
+                    value: crate::show::raw(y),
+                }))
             }
-            _ => (),
+        }
+        self
+    }
+
+    pub(crate) fn yaml_pairs(mut self, root: &str, key_value: (&str, &str)) -> Self {
+        if let Yaml::Array(array) = &self.yaml[root] {
+            for y in array {
+                let (name, value) = (y[key_value.0].clone(), y[key_value.1].clone());
+                self.children.push(Child::Attribute(Attribute {
+                    name: Name::Yaml(name.clone()),
+                    value: raw(&value.clone()),
+                }));
+            }
         }
         self
     }
@@ -475,6 +488,7 @@ pub(crate) fn raw(yaml: &Yaml) -> String {
     match yaml {
         Yaml::String(string) => string.clone(),
         Yaml::Integer(int) => format!("{}", int),
+        Yaml::Boolean(bool) => format!("{:?}", bool),
         _ => "None".to_string(),
     }
 }

@@ -63,13 +63,11 @@ pub(crate) fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
 
 #[derive(Serialize)]
 pub(crate) struct Info {
-    key_attribute: &'static str,
+    key_attribute: Option<&'static str>,
     service_name: &'static str,
     resource_type_name: &'static str,
     pub(crate) list_api: ListApi,
-    pub(crate) list_api_document_url: &'static str,
     pub(crate) get_api: Option<GetApi>,
-    pub(crate) get_api_document_url: Option<&'static str>,
     pub(crate) resource_url: Option<ResourceUrl>,
 }
 
@@ -80,20 +78,26 @@ pub(crate) enum ResourceUrl {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) enum ListApi {
-    Xml(XmlListApi),
-    Json(JsonListApi),
+pub(crate) struct ListApi {
+    pub(crate) format: ListFormat,
+    pub(crate) document: &'static str,
 }
 
-impl ListApi {
+#[derive(Serialize, Clone)]
+pub(crate) enum ListFormat {
+    Xml(ListXml),
+    Json(ListJson),
+}
+
+impl ListFormat {
     pub(crate) fn name(&self) -> String {
         match self {
-            ListApi::Xml(api) => format!("{} {:?}", api.path, api.params),
-            ListApi::Json(JsonListApi {
+            ListFormat::Xml(api) => format!("{} {:?}", api.path, api.params),
+            ListFormat::Json(ListJson {
                 method: JsonListMethod::Post { target },
                 ..
             }) => target.to_string(),
-            ListApi::Json(JsonListApi {
+            ListFormat::Json(ListJson {
                 method: JsonListMethod::Get { path },
                 ..
             }) => path.to_string(),
@@ -102,8 +106,8 @@ impl ListApi {
 
     pub(crate) fn parameter_name(&self) -> Option<&'static str> {
         match self {
-            ListApi::Xml(_) => None,
-            ListApi::Json(api) => api.parameter_name,
+            ListFormat::Xml(_) => None,
+            ListFormat::Json(api) => api.parameter_name,
         }
     }
 }
@@ -115,7 +119,7 @@ pub(crate) struct Limit {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) struct XmlListApi {
+pub(crate) struct ListXml {
     pub(crate) path: &'static str,
     pub(crate) path_place_holder: Option<&'static str>,
     pub(crate) method: Method,
@@ -143,7 +147,7 @@ impl Method {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) struct JsonListApi {
+pub(crate) struct ListJson {
     pub(crate) method: JsonListMethod,
     pub(crate) service_name: &'static str,
     pub(crate) json: serde_json::Value,
@@ -158,7 +162,7 @@ pub(crate) enum JsonListMethod {
     Get { path: &'static str },
 }
 
-impl JsonListApi {
+impl ListJson {
     pub(crate) fn json_map(&self) -> Result<Map<String, Value>> {
         if let Value::Object(map) = &self.json {
             return Ok(map.clone());
@@ -169,16 +173,22 @@ impl JsonListApi {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) enum GetApi {
-    Xml(XmlGetApi),
-    Json(JsonGetApi),
+pub(crate) struct GetApi {
+    pub(crate) format: GetFormat,
+    pub(crate) document: &'static str,
 }
 
-impl GetApi {
+#[derive(Serialize, Clone)]
+pub(crate) enum GetFormat {
+    Xml(GetXml),
+    Json(GetJson),
+}
+
+impl GetFormat {
     pub(crate) fn name(&self) -> &'static str {
         match self {
-            GetApi::Xml(api) => api.action,
-            GetApi::Json(JsonGetApi {
+            GetFormat::Xml(api) => api.action,
+            GetFormat::Json(GetJson {
                 target: Some(target),
                 ..
             }) => target,
@@ -188,7 +198,7 @@ impl GetApi {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) struct XmlGetApi {
+pub(crate) struct GetXml {
     pub(crate) service_name: &'static str,
     pub(crate) action: &'static str,
     pub(crate) version: &'static str,
@@ -196,7 +206,7 @@ pub(crate) struct XmlGetApi {
 }
 
 #[derive(Serialize, Clone)]
-pub(crate) struct JsonGetApi {
+pub(crate) struct GetJson {
     pub(crate) method: Method,
     pub(crate) path: &'static str,
     pub(crate) path_place_holder: Option<&'static str>,
@@ -269,14 +279,14 @@ pub(crate) trait AwsResource: Send + Sync {
     }
 
     fn equal(&self, yaml: &Yaml, key: &str) -> bool {
-        yaml[&self.key()[..]] == Yaml::String(key.to_string())
+        self.resource_name(yaml) == key.to_string()
     }
 
-    fn resource_name(&self, yaml: &Yaml) -> String {
-        return match &yaml[&self.key()[..]] {
-            Yaml::String(resource_id) => resource_id.to_string(),
-            _ => "no name".to_string(),
-        };
+    fn resource_name(&self, list: &Yaml) -> String {
+        crate::show::raw(match self.info().key_attribute {
+            Some(key_attribute) => &list[key_attribute],
+            None => &list,
+        })
     }
 
     fn service_name(&self) -> String {
@@ -295,16 +305,15 @@ pub(crate) trait AwsResource: Send + Sync {
         self.resource_type_name().replace("_", "-")
     }
 
-    fn key(&self) -> String {
-        self.info().key_attribute.to_owned()
+    fn list_api(&self) -> ListFormat {
+        self.info().list_api.format.clone()
     }
 
-    fn list_api(&self) -> ListApi {
-        self.info().list_api.clone()
-    }
-
-    fn get_api(&self) -> Option<GetApi> {
-        self.info().get_api.clone()
+    fn get_api(&self) -> Option<GetFormat> {
+        if let Some(api) = &self.info().get_api {
+            return Some(api.format.clone());
+        }
+        None
     }
 
     fn has_get_api(&self) -> bool {
@@ -312,11 +321,11 @@ pub(crate) trait AwsResource: Send + Sync {
     }
 
     fn max_limit(&self) -> String {
-        match &self.info().list_api {
-            ListApi::Xml(XmlListApi {
+        match &self.info().list_api.format {
+            ListFormat::Xml(ListXml {
                 limit: Some(limit), ..
             }) => format!("{}: {}", limit.name, limit.max),
-            ListApi::Json(JsonListApi {
+            ListFormat::Json(ListJson {
                 limit: Some(limit), ..
             }) => format!("{}: {}", limit.name, limit.max),
             _ => "-".to_owned(),

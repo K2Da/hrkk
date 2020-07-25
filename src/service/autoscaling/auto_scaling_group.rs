@@ -8,30 +8,30 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "auto_scaling_group_name",
+            key_attribute: Some("auto_scaling_group_name"),
             service_name: "autoscaling",
             resource_type_name: "auto_scaling_group",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "autoscaling",
-                iteration_tag: vec!["member"],
-                limit: Some(Limit {
-                    name: "MaxResults",
-                    max: 100,
-                }),
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "DescribeAutoScalingGroups"),
-                    ("Version", "2011-01-01")
-                ],
-                region: None,
-            }),
-            list_api_document_url:
-                "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html",
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "autoscaling",
+                    iteration_tag: vec!["member"],
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 100,
+                    }),
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "DescribeAutoScalingGroups"),
+                        ("Version", "2011-01-01")
+                    ],
+                    region: None,
+                    }),
+                document: "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html",
+            },
             get_api: None,
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional("ec2autoscaling/home?#/details/{group_name}")),
         },
     }

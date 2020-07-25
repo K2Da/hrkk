@@ -103,23 +103,20 @@ impl Commands {
                     ))
                     .str("result limit", &format!("{}", &item.command.max_limit()));
 
-                section = section.str("List API", &info.list_api.name());
+                section = section.str("List API", &info.list_api.format.name());
 
-                section = section.str("docs", &info.list_api_document_url);
+                section = section.str("docs", &info.list_api.document);
 
                 if let Some(get) = &info.get_api {
-                    section = section.str("Get API", &get.name());
-                }
-
-                if let Some(url) = &info.get_api_document_url {
-                    section = section.str("docs", url);
+                    section = section.str("Get API", &get.format.name());
+                    section = section.str("docs", get.document);
                 }
 
                 if let Some(url) = &info.resource_url {
                     section = section.str("resource uri", &format!("{:?}", url));
                 }
 
-                if let Some(parameter_name) = &info.list_api.parameter_name() {
+                if let Some(parameter_name) = &info.list_api.format.parameter_name() {
                     section = section.str("required parameter", parameter_name);
                 }
 

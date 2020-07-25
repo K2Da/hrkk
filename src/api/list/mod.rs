@@ -5,7 +5,7 @@ use crate::error::Result;
 use crate::opts::Opts;
 use crate::service::prelude::*;
 use crate::service::AwsResource;
-use crate::service::{ListApi, XmlListApi};
+use crate::service::{ListFormat, ListXml};
 use rusoto_core::signature::SignedRequest;
 
 pub(crate) async fn call(
@@ -18,10 +18,10 @@ pub(crate) async fn call(
         super::send_request(request(resource, parameter, opts, next_token)?, opts).await?;
 
     let yaml = match resource.list_api() {
-        ListApi::Xml(XmlListApi { iteration_tag, .. }) => {
+        ListFormat::Xml(ListXml { iteration_tag, .. }) => {
             super::xml_to_yaml::convert(response.body.as_ref(), &iteration_tag)?
         }
-        ListApi::Json { .. } => super::json_to_yaml::convert(response.body.as_ref())?,
+        ListFormat::Json { .. } => super::json_to_yaml::convert(response.body.as_ref())?,
     };
 
     if opts.debug {
@@ -37,9 +37,9 @@ fn request(
     opts: &Opts,
     next_token: Option<String>,
 ) -> Result<SignedRequest> {
-    match &resource.info().list_api {
-        ListApi::Xml(xml_api) => xml_helper::request(opts, next_token, parameter, xml_api),
-        ListApi::Json(json_api) => json_helper::request(opts, next_token, parameter, json_api),
+    match &resource.info().list_api.format {
+        ListFormat::Xml(xml_api) => xml_helper::request(opts, next_token, parameter, xml_api),
+        ListFormat::Json(json_api) => json_helper::request(opts, next_token, parameter, json_api),
     }
 }
 

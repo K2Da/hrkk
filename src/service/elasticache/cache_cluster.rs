@@ -8,30 +8,30 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "cache_cluster_id",
+            key_attribute: Some("cache_cluster_id"),
             service_name: "elasticache",
             resource_type_name: "cache_cluster",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Get,
-                service_name: "elasticache",
-                iteration_tag: vec!["CacheCluster", "Member"],
-                limit: Some(Limit {
-                    name: "MaxRecords",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Get,
+                    service_name: "elasticache",
+                    iteration_tag: vec!["CacheCluster", "Member"],
+                    limit: Some(Limit {
+                        name: "MaxRecords",
+                        max: 100,
+                    }),
+                    token_name: "Marker",
+                    params: vec![
+                        ("Action", "DescribeCacheClusters"),
+                        ("Version", "2015-02-02")
+                    ],
+                    region: None,
                 }),
-                token_name: "Marker",
-                params: vec![
-                    ("Action", "DescribeCacheClusters"),
-                    ("Version", "2015-02-02")
-                ],
-                region: None,
-            }),
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AmazonElastiCache/latest/APIReference/API_DescribeCacheClusters.html",
+                document: "https://docs.aws.amazon.com/AmazonElastiCache/latest/APIReference/API_DescribeCacheClusters.html",
+            },
             get_api: None,
-            get_api_document_url: None,
             resource_url: None,
         },
     }

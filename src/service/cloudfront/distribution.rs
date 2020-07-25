@@ -8,28 +8,27 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "id",
+            key_attribute: Some("id"),
             service_name: "cloudfront",
             resource_type_name: "distribution",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/2020-05-31/distribution",
-                path_place_holder: None,
-                method: Method::Get,
-                service_name: "cloudfront",
-                iteration_tag: vec!["DistributionSummary", "SslProtocol", "Method", "Name", "Origin"],
-                limit: Some(Limit {
-                    name: "maxitems",
-                    max: 100,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/2020-05-31/distribution",
+                    path_place_holder: None,
+                    method: Method::Get,
+                    service_name: "cloudfront",
+                    iteration_tag: vec!["DistributionSummary", "SslProtocol", "Method", "Name", "Origin"],
+                    limit: Some(Limit {
+                        name: "maxitems",
+                        max: 100,
+                    }),
+                    token_name: "marker",
+                    params: vec![],
+                    region: Some(Region::UsEast1),
                 }),
-                token_name: "marker",
-                params: vec![],
-                region: Some(Region::UsEast1),
-            }),
+                document: "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributions.html",
+            },
             get_api: None,
-
-            list_api_document_url:
-                "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributions.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Global("cloudfront/home?#distribution-settings:{distribution_id}")),
         },
     }

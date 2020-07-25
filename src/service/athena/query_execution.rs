@@ -8,31 +8,31 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "",
+            key_attribute: None,
             service_name: "athena",
             resource_type_name: "query_execution",
-            list_api: ListApi::Json(JsonListApi {
-                method: JsonListMethod::Post {
-                    target: "AmazonAthena.ListQueryExecutions",
-                },
-                service_name: "athena",
-                json: json!({}),
-                limit: Some(Limit { name: "MaxResults", max: 50 }),
-                token_name: Some("NextToken"),
-                parameter_name: None,
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post { target: "AmazonAthena.ListQueryExecutions", },
+                    service_name: "athena",
+                    json: json!({}),
+                    limit: Some(Limit { name: "MaxResults", max: 50 }),
+                    token_name: Some("NextToken"),
+                    parameter_name: None,
+                }),
+                document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
+            },
+            get_api: Some(GetApi {
+                format: GetFormat::Json(GetJson {
+                    method: Method::Post,
+                    path: "/",
+                    path_place_holder: None,
+                    service_name: "athena",
+                    target: Some("AmazonAthena.GetQueryExecution"),
+                    parameter_name: Some("QueryExecutionId"),
+                }),
+                document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html",
             }),
-            get_api: Some(GetApi::Json(JsonGetApi{
-                method: Method::Post,
-                path: "/",
-                path_place_holder: None,
-                service_name: "athena",
-                target: Some("AmazonAthena.GetQueryExecution"),
-                parameter_name: Some("QueryExecutionId"),
-            })),
-            list_api_document_url:
-                "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
-            get_api_document_url:
-                Some("https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html"),
             resource_url: Some(ResourceUrl::Regional("athena/home?#query/history/{execution_id}")),
         },
     }

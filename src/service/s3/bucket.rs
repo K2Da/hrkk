@@ -8,24 +8,24 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "name",
+            key_attribute: Some("name"),
             service_name: "s3",
             resource_type_name: "bucket",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Get,
-                service_name: "s3",
-                iteration_tag: vec!["Bucket"],
-                limit: None,
-                token_name: "",
-                params: vec![],
-                region: None,
-            }),
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html",
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Get,
+                    service_name: "s3",
+                    iteration_tag: vec!["Bucket"],
+                    limit: None,
+                    token_name: "",
+                    params: vec![],
+                    region: None,
+                }),
+                document: "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html",
+            },
             get_api: None,
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Global("s3/buckets/{bucket_name}/")),
         },
     }

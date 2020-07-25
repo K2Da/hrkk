@@ -8,37 +8,39 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "dashboard",
+            key_attribute: Some("dashboard"),
             service_name: "cloudwatch",
             resource_type_name: "dashboard",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "monitoring",
-                iteration_tag: vec!["member"],
-                limit: None,
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "ListDashboards"),
-                    ("Version", "2010-08-01"),
-                ],
-                region: None,
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "monitoring",
+                    iteration_tag: vec!["member"],
+                    limit: None,
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "ListDashboards"),
+                        ("Version", "2010-08-01"),
+                    ],
+                    region: None,
+                }),
+                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
+            },
+            get_api: Some(GetApi {
+                format: GetFormat::Xml(GetXml {
+                    service_name: "monitoring",
+                    action: "GetDashboard",
+                    version: "2010-08-01",
+                    parameter_name: "DashboardName",
+                }),
+                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html",
             }),
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
-            get_api: Some(GetApi::Xml(XmlGetApi {
-                service_name: "monitoring",
-                action: "GetDashboard",
-                version: "2010-08-01",
-                parameter_name: "DashboardName",
-            })),
-            get_api_document_url:
-                Some("https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html"),
             resource_url: Some(
                 ResourceUrl::Regional("cloudwatch/home?#dashboards:name={dashboard_name}")
             ),
-    },
+        },
     }
 }
 

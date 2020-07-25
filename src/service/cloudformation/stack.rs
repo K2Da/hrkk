@@ -8,27 +8,27 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "stack_id",
+            key_attribute: Some("stack_id"),
             service_name: "cloudformation",
             resource_type_name: "stack",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "cloudformation",
-                iteration_tag: vec!["member"],
-                limit: None,
-                token_name: "NextToken",
-                params: vec![
-                    ("Action", "DescribeStacks"),
-                    ("Version", "2010-05-15")
-                ],
-                region: None,
-            }),
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "cloudformation",
+                    iteration_tag: vec!["member"],
+                    limit: None,
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Action", "DescribeStacks"),
+                        ("Version", "2010-05-15")
+                    ],
+                    region: None,
+                }),
+                document: "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
+            },
             get_api: None,
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional("cloudformation/home?#/stacks/stackinfo?stackId={stack_id}")),
         },
     }

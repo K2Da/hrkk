@@ -5,7 +5,7 @@ pub(crate) fn request(
     opts: &Opts,
     next_token: Option<String>,
     parameter: &Option<String>,
-    xml_api: &XmlListApi,
+    xml_api: &ListXml,
 ) -> Result<SignedRequest> {
     let region = if let Some(region) = xml_api.region.clone() {
         region

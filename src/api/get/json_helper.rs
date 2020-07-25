@@ -1,11 +1,7 @@
 use crate::service::prelude::*;
 use serde_json::{Map, Value};
 
-pub(crate) fn request(
-    opts: &Opts,
-    parameter: &str,
-    json_api: &JsonGetApi,
-) -> Result<SignedRequest> {
+pub(crate) fn request(opts: &Opts, parameter: &str, json_api: &GetJson) -> Result<SignedRequest> {
     let mut map = Map::<String, Value>::new();
 
     if let Some(parameter_name) = json_api.parameter_name {

@@ -8,28 +8,29 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "image_id",
+            key_attribute: Some("image_id"),
             service_name: "ec2",
             resource_type_name: "image",
-            list_api: ListApi::Xml(XmlListApi {
-                path: "/",
-                path_place_holder: None,
-                method: Method::Post,
-                service_name: "ec2",
-                iteration_tag: vec!["item"],
-                limit: None,
-                token_name: "NextToken",
-                params: vec![
-                    ("Owner.1", "self"),
-                    ("Action", "DescribeImages"),
-                    ("Version", "2016-11-15"),
-                ],
-                region: None,
-            }),
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: "/",
+                    path_place_holder: None,
+                    method: Method::Post,
+                    service_name: "ec2",
+                    iteration_tag: vec!["item"],
+                    limit: None,
+                    token_name: "NextToken",
+                    params: vec![
+                        ("Owner.1", "self"),
+                        ("Action", "DescribeImages"),
+                        ("Version", "2016-11-15"),
+                    ],
+                    region: None,
+                }),
+                document:
+                    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html",
+            },
             get_api: None,
-            list_api_document_url:
-                "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html",
-            get_api_document_url: None,
             resource_url: Some(ResourceUrl::Regional(
                 "ec2/v2/home?#Images:imageId={image_id}",
             )),
