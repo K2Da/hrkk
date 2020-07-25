@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "distribution",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/2020-05-31/distribution",
-                    path_place_holder: None,
+                    path: ("/2020-05-31/distribution", None),
                     method: Method::Get,
                     service_name: "cloudfront",
                     iteration_tag: vec!["DistributionSummary", "SslProtocol", "Method", "Name", "Origin"],

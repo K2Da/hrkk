@@ -35,9 +35,12 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(cloudwatch::alarm_history::new()),
         Box::new(cloudwatch::dashboard::new()),
         Box::new(cloudwatch::metric::new()),
+        Box::new(ec2::image::new()),
         Box::new(ec2::instance::new()),
         Box::new(ec2::launch_template::new()),
-        Box::new(ec2::image::new()),
+        Box::new(ec2::security_group::new()),
+        Box::new(ec2::subnet::new()),
+        Box::new(ec2::vpc::new()),
         Box::new(elasticache::cache_cluster::new()),
         Box::new(elb::load_balancer::new()),
         Box::new(es::domain::new()),
@@ -94,7 +97,7 @@ pub(crate) enum ListFormat {
 impl ListFormat {
     pub(crate) fn name(&self) -> String {
         match self {
-            ListFormat::Xml(api) => format!("{} {:?}", api.path, api.params),
+            ListFormat::Xml(api) => format!("{} {:?}", api.path.0, api.params),
             ListFormat::Json(ListJson {
                 method: JsonListMethod::Post { target },
                 ..
@@ -122,8 +125,7 @@ pub(crate) struct Limit {
 
 #[derive(Serialize, Clone)]
 pub(crate) struct ListXml {
-    pub(crate) path: &'static str,
-    pub(crate) path_place_holder: Option<&'static str>,
+    pub(crate) path: (&'static str, Option<&'static str>),
     pub(crate) method: Method,
     pub(crate) service_name: &'static str,
     pub(crate) iteration_tag: Vec<&'static str>,
@@ -210,8 +212,7 @@ pub(crate) struct GetXml {
 #[derive(Serialize, Clone)]
 pub(crate) struct GetJson {
     pub(crate) method: Method,
-    pub(crate) path: &'static str,
-    pub(crate) path_place_holder: Option<&'static str>,
+    pub(crate) path: (&'static str, Option<&'static str>),
     pub(crate) service_name: &'static str,
     pub(crate) target: Option<&'static str>,
     pub(crate) parameter_name: Option<&'static str>,
@@ -262,10 +263,7 @@ pub(crate) trait AwsResource: Send + Sync {
                 ResourceUrl::Global(url) => format!("https://console.aws.amazon.com/{}", url),
             };
             for (key, param) in self.url_params(list, get).unwrap_or(vec![]).iter() {
-                line = line.replace(
-                    &("{".to_string() + &format!("{}", key) + "}"),
-                    &url_encoded(param),
-                );
+                line = line.replace(&("{".to_string() + key + "}"), &url_encoded(param));
             }
             return line;
         }

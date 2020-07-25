@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "hosted_zone",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/2013-04-01/hostedzone",
-                    path_place_holder: None,
+                    path: ("/2013-04-01/hostedzone", None),
                     method: Method::Get,
                     service_name: "route53",
                     iteration_tag: vec!["HostedZone"],

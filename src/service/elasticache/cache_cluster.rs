@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "cache_cluster",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/",
-                    path_place_holder: None,
+                    path: ("/", None),
                     method: Method::Get,
                     service_name: "elasticache",
                     iteration_tag: vec!["CacheCluster", "Member"],

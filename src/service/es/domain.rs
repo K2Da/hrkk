@@ -27,8 +27,7 @@ pub(crate) fn new() -> Resource {
             get_api: Some(GetApi {
                 format: GetFormat::Json(GetJson {
                     method: Method::Get,
-                    path: "/2015-01-01/es/domain/{domain_name}",
-                    path_place_holder: Some("{domain_name}"),
+                    path: ("/2015-01-01/es/domain/{domain_name}", Some("domain_name")),
                     service_name: "es",
                     target: None,
                     parameter_name: None,

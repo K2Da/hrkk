@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "instance",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/",
-                    path_place_holder: None,
+                    path: ("/", None),
                     method: Method::Post,
                     service_name: "ec2",
                     iteration_tag: vec!["item"],

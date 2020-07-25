@@ -13,9 +13,9 @@ pub(crate) fn request(opts: &Opts, parameter: &str, json_api: &GetJson) -> Resul
 
     let encoded = Value::Object(map);
 
-    let mut path = json_api.path.to_string();
-    if let Some(place_holder) = json_api.path_place_holder {
-        path = path.replace(place_holder, parameter);
+    let mut path = json_api.path.0.to_string();
+    if let Some(place_holder) = json_api.path.1 {
+        path = path.replace(&("{".to_string() + place_holder + "}"), parameter);
     }
 
     let mut request = SignedRequest::new(

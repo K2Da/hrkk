@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "stack",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/",
-                    path_place_holder: None,
+                    path: ("/", None),
                     method: Method::Post,
                     service_name: "cloudformation",
                     iteration_tag: vec!["member"],

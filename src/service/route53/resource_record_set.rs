@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "resource_record_set",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/2013-04-01/hostedzone/{zone_id}/rrset",
-                    path_place_holder: Some("{zone_id}"),
+                    path: ("/2013-04-01/hostedzone/{zone_id}/rrset", Some("zone_id")),
                     method: Method::Get,
                     service_name: "route53",
                     iteration_tag: vec!["ResourceRecordSet", "ResourceRecord"],

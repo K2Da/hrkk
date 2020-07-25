@@ -166,7 +166,7 @@ pub(crate) enum SubCommand {
         command: ElbCommand,
     },
 
-    /// Es
+    /// Elasticsearch Service
     #[structopt(name = "es")]
     Es {
         #[structopt(subcommand)]
@@ -201,14 +201,14 @@ pub(crate) enum SubCommand {
         command: Route53Command,
     },
 
-    /// Systems Manager.
+    /// S3
     #[structopt(name = "s3")]
     S3 {
         #[structopt(subcommand)]
         command: S3Command,
     },
 
-    /// Systems Manager.
+    /// Systems Manager
     #[structopt(name = "ssm")]
     Ssm {
         #[structopt(subcommand)]
@@ -224,6 +224,12 @@ pub(crate) enum Ec2Command {
     LaunchTemplate,
     #[structopt(name = "image")]
     Image,
+    #[structopt(name = "security-group")]
+    SecurityGroup,
+    #[structopt(name = "subnet")]
+    Subnet,
+    #[structopt(name = "vpc")]
+    Vpc,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]

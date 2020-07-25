@@ -25,8 +25,7 @@ pub(crate) fn new() -> Resource {
             get_api: Some(GetApi {
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
-                    path: "/",
-                    path_place_holder: None,
+                    path: ("/", None),
                     service_name: "athena",
                     target: Some("AmazonAthena.GetQueryExecution"),
                     parameter_name: Some("QueryExecutionId"),

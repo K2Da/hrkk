@@ -13,8 +13,7 @@ pub(crate) fn new() -> Resource {
             resource_type_name: "bucket",
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
-                    path: "/",
-                    path_place_holder: None,
+                    path: ("/", None),
                     method: Method::Get,
                     service_name: "s3",
                     iteration_tag: vec!["Bucket"],

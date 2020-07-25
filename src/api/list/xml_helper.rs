@@ -13,10 +13,10 @@ pub(crate) fn request(
         opts.region()?
     };
 
-    let mut path = xml_api.path.to_string();
+    let mut path = xml_api.path.0.to_string();
     if let Some(parameter) = parameter {
-        if let Some(place_holder) = xml_api.path_place_holder {
-            path = path.replace(place_holder, parameter);
+        if let Some(place_holder) = xml_api.path.1 {
+            path = path.replace(&("{".to_string() + place_holder + "}"), parameter);
         }
     }
 
