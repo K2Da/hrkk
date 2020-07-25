@@ -25,9 +25,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
             },
             get_api: None,
-            resource_url: Some(
-                ResourceUrl::Regional("systems-manager/documents/{name}")
-            ),
+            resource_url: Some(Regional("systems-manager/documents/{name}")),
         },
     }
 }

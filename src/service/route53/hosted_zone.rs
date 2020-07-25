@@ -29,9 +29,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Global(
-                "route53/home?#resource-record-sets:{zone_id}",
-            )),
+            resource_url: Some(Global("route53/home?#resource-record-sets:{zone_id}")),
         },
     }
 }

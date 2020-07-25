@@ -35,9 +35,7 @@ pub(crate) fn new() -> Resource {
                 }),
                 document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain",
             }),
-            resource_url: Some(ResourceUrl::Regional(
-                "es/home?#domain:resource={domain_name};action=dashboard",
-            )),
+            resource_url: Some(Regional("es/home?#domain:resource={domain_name};action=dashboard")),
         },
     }
 }

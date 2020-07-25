@@ -32,7 +32,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeLaunchTemplates.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional("ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}")),
+            resource_url: Some(Regional("ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}")),
         },
     }
 }

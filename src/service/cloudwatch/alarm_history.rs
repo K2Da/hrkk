@@ -33,7 +33,7 @@ pub(crate) fn new() -> Resource {
             },
             get_api: None,
             resource_url: Some(
-                ResourceUrl::Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")
+                Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")
             ),
         },
     }

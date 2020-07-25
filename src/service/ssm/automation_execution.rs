@@ -25,9 +25,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
             },
             get_api: None,
-            resource_url: Some(
-                ResourceUrl::Regional("systems-manager/automation/execution/{execution_id}")
-            ),
+            resource_url: Some(Regional("systems-manager/automation/execution/{execution_id}")),
         },
     }
 }

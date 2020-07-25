@@ -28,9 +28,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/lambda/latest/dg/API_ListFunctions.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional(
-                "lambda/home?#/functions/{function_name}",
-            )),
+            resource_url: Some(Regional("lambda/home?#/functions/{function_name}")),
         },
     }
 }

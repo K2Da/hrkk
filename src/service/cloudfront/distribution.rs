@@ -29,7 +29,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributions.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Global("cloudfront/home?#distribution-settings:{distribution_id}")),
+            resource_url: Some(Global("cloudfront/home?#distribution-settings:{distribution_id}")),
         },
     }
 }

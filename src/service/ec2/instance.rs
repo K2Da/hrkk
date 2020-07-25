@@ -29,7 +29,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional(
+            resource_url: Some(Regional(
                 "ec2/v2/home?#Instances:search={instance_id}",
             )),
         },

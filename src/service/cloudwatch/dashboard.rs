@@ -38,7 +38,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html",
             }),
             resource_url: Some(
-                ResourceUrl::Regional("cloudwatch/home?#dashboards:name={dashboard_name}")
+                Regional("cloudwatch/home?#dashboards:name={dashboard_name}")
             ),
         },
     }

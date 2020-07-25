@@ -29,7 +29,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional("cloudformation/home?#/stacks/stackinfo?stackId={stack_id}")),
+            resource_url: Some(Regional("cloudformation/home?#/stacks/stackinfo?stackId={stack_id}")),
         },
     }
 }

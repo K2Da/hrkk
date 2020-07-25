@@ -32,7 +32,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional("ec2autoscaling/home?#/details/{group_name}")),
+            resource_url: Some(Regional("ec2autoscaling/home?#/details/{group_name}")),
         },
     }
 }

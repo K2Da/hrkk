@@ -25,7 +25,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}")),
+            resource_url: Some(Regional("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}")),
         },
     }
 }

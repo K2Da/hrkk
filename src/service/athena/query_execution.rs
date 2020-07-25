@@ -33,7 +33,7 @@ pub(crate) fn new() -> Resource {
                 }),
                 document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html",
             }),
-            resource_url: Some(ResourceUrl::Regional("athena/home?#query/history/{execution_id}")),
+            resource_url: Some(Regional("athena/home?#query/history/{execution_id}")),
         },
     }
 }

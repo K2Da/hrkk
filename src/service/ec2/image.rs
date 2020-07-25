@@ -31,9 +31,7 @@ pub(crate) fn new() -> Resource {
                     "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html",
             },
             get_api: None,
-            resource_url: Some(ResourceUrl::Regional(
-                "ec2/v2/home?#Images:imageId={image_id}",
-            )),
+            resource_url: Some(Regional("ec2/v2/home?#Images:imageId={image_id}")),
         },
     }
 }

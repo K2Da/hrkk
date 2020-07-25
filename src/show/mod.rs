@@ -122,7 +122,7 @@ impl Section {
     }
 
     pub(crate) fn resource_url(self, url: String) -> Self {
-        self.child("resource_url", &url)
+        self.child("aws console url", &url)
     }
 
     pub(crate) fn span(self, name: &str, span: (&str, &str)) -> Self {
