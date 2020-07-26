@@ -173,6 +173,13 @@ pub(crate) enum SubCommand {
         command: EsCommand,
     },
 
+    /// Kinesis
+    #[structopt(name = "kinesis")]
+    Kinesis {
+        #[structopt(subcommand)]
+        command: KinesisCommand,
+    },
+
     /// Lambda
     #[structopt(name = "lambda")]
     Lambda {
@@ -248,6 +255,12 @@ pub(crate) enum ElbCommand {
 pub(crate) enum EsCommand {
     #[structopt(name = "domain")]
     Domain,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum KinesisCommand {
+    #[structopt(name = "stream")]
+    Stream,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]
