@@ -8,31 +8,31 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: Some("stream_name"),
-            service_name: "kinesis",
-            resource_type_name: "stream",
+            key_attribute: Some("delivery_stream_name"),
+            service_name: "firehose",
+            resource_type_name: "delivery_stream",
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
-                    method: JsonListMethod::Post { target: "Kinesis_20131202.ListStreams", },
-                    service_name: "kinesis",
+                    method: JsonListMethod::Post { target: "Firehose_20150804.ListDeliveryStreams", },
+                    service_name: "firehose",
                     json: json!({}),
                     limit: Some(Limit { name: "Limit", max: 10000 }),
-                    token_name: Some("ExclusiveStartStreamName"),
+                    token_name: Some("ExclusiveStartDeliveryStreamName"),
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListStreams.html",
+                document: "https://docs.aws.amazon.com/firehose/latest/APIReference/API_ListDeliveryStreams.html",
             },
             get_api: Some(GetApi {
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
                     path: ("/", None),
-                    service_name: "kinesis",
-                    target: Some("Kinesis_20131202.DescribeStream"),
-                    parameter_name: Some("StreamName"),
+                    service_name: "firehose",
+                    target: Some("Firehose_20150804.DescribeDeliveryStream"),
+                    parameter_name: Some("DeliveryStreamName"),
                 }),
-                document: "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStream.html",
+                document: "https://docs.aws.amazon.com/firehose/latest/APIReference/API_DescribeDeliveryStream.html"
             }),
-            resource_url: Some(Regional("kinesis/home?#/streams/details/{stream_name}/details")),
+            resource_url: Some(Regional("firehose/home?#/details/{delivery_stream_name}")),
         },
     }
 }
@@ -43,13 +43,13 @@ impl AwsResource for Resource {
     }
 
     fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Kinesis {
-            command: KinesisCommand::Stream,
+        Some(SubCommand::Firehose {
+            command: FirehoseCommand::DeliveryStream,
         })
     }
 
     fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        let (rl, _) = make_vec(self, &yaml["stream_names"], None);
+        let (rl, _) = make_vec(self, &yaml["delivery_stream_names"], None);
         let last_stream_name = match rl.last() {
             Some(last) => last.0.first().map(|s| s.clone()),
             None => None,
@@ -58,16 +58,16 @@ impl AwsResource for Resource {
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["name", "creation timestamp"]
+        vec!["name", "create timestamp"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
         match get {
             Some(get) => {
-                let root = &get["stream_description"];
+                let root = &get["delivery_stream_description"];
                 vec![
-                    show::raw(&root["stream_name"]),
-                    show::time(&root["stream_creation_timestamp"]),
+                    show::raw(&root["delivery_stream_name"]),
+                    show::time(&root["create_timestamp"]),
                 ]
             }
             None => vec![show::raw(&list), "".to_string()],
@@ -78,16 +78,15 @@ impl AwsResource for Resource {
         match get {
             None => Section::new(list),
             Some(yaml) => {
-                let root = &yaml["stream_description"];
+                let root = &yaml["delivery_stream_description"];
                 Section::new(root)
-                    .yaml_name("stream_name")
+                    .yaml_name("delivery_stream_name")
                     .resource_url(self.console_url(list, get, region))
-                    .raw("stream_status")
-                    .raw("stream_arn")
-                    .time("stream_creation_timestamp")
-                    .raw("encryption_type")
-                    .raw("has_more_shards")
-                    .raw("retention_period_hours")
+                    .raw("delivery_stream_status")
+                    .raw("delivery_stream_arn")
+                    .time("create_timestamp")
+                    .time("last_update_timestamp")
+                    .raw("version_id")
             }
         }
     }
@@ -95,8 +94,8 @@ impl AwsResource for Resource {
     fn url_params(&self, _list: &Yaml, get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
         if let Some(yaml) = get {
             Some(vec![(
-                "stream_name",
-                show::raw(&yaml["stream_description"]["stream_name"]),
+                "delivery_stream_name",
+                show::raw(&yaml["delivery_stream_description"]["delivery_stream_name"]),
             )])
         } else {
             None

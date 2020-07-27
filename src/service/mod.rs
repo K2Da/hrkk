@@ -15,6 +15,7 @@ pub(crate) mod ec2;
 pub(crate) mod elasticache;
 pub(crate) mod elb;
 pub(crate) mod es;
+pub(crate) mod firehose;
 pub(crate) mod kinesis;
 pub(crate) mod lambda;
 pub(crate) mod logs;
@@ -45,6 +46,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(elasticache::cache_cluster::new()),
         Box::new(elb::load_balancer::new()),
         Box::new(es::domain::new()),
+        Box::new(firehose::delivery_stream::new()),
         Box::new(kinesis::stream::new()),
         Box::new(lambda::function::new()),
         Box::new(logs::log_group::new()),

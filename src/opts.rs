@@ -173,6 +173,13 @@ pub(crate) enum SubCommand {
         command: EsCommand,
     },
 
+    /// Firehose Service
+    #[structopt(name = "es")]
+    Firehose {
+        #[structopt(subcommand)]
+        command: FirehoseCommand,
+    },
+
     /// Kinesis
     #[structopt(name = "kinesis")]
     Kinesis {
@@ -255,6 +262,12 @@ pub(crate) enum ElbCommand {
 pub(crate) enum EsCommand {
     #[structopt(name = "domain")]
     Domain,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum FirehoseCommand {
+    #[structopt(name = "delivery-stream")]
+    DeliveryStream,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]
