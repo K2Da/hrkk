@@ -28,7 +28,7 @@ pub(crate) async fn call(
         crate::api::file::store_yaml(&yaml, "list")?;
     }
 
-    Ok(resource.make_vec(&yaml))
+    Ok(resource.list_and_next_token(&yaml))
 }
 
 fn request(
@@ -43,20 +43,16 @@ fn request(
     }
 }
 
-pub(crate) fn make_vec(
+pub(crate) fn make_resource_list(
     resource: &dyn crate::service::AwsResource,
     yaml: &Yaml,
-    token_name: Option<&'static str>,
-) -> (ResourceList, Option<String>) {
+) -> ResourceList {
     if let Yaml::Array(items) = &yaml {
-        return (
-            items
-                .iter()
-                .map(|y| (resource.line(y, &None), y.clone()))
-                .collect(),
-            next_token(&yaml, token_name),
-        );
+        return items
+            .iter()
+            .map(|y| (resource.line(y, &None), y.clone()))
+            .collect();
     }
 
-    (vec![], next_token(&yaml, token_name))
+    vec![]
 }

@@ -1,4 +1,4 @@
-pub(crate) use crate::api::list::make_vec;
+pub(crate) use crate::api::list::make_resource_list;
 pub(crate) use crate::error::Error::*;
 pub(crate) use crate::error::Result;
 pub(crate) use crate::opts::Opts;

@@ -49,7 +49,7 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         let mut arr = vec![];
         let yaml = &yaml["describe_alarms_result"];
 

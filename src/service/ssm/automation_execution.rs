@@ -41,11 +41,10 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(
-            self,
-            &yaml["automation_execution_metadata_list"],
-            Some("next_token"),
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["automation_execution_metadata_list"]),
+            next_token(&yaml, Some("next_token")),
         )
     }
 

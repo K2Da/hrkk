@@ -42,16 +42,18 @@ impl AwsResource for Resource {
     }
 
     fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Logs {
-            command: LogsCommand::LogGroup,
+        Some(SubCommand::Elasticache {
+            command: ElasticacheCommand::CacheCluster,
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(
-            self,
-            &yaml["describe_cache_clusters_result"]["cache_clusters"],
-            Some("marker"),
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(
+                self,
+                &yaml["describe_cache_clusters_result"]["cache_clusters"],
+            ),
+            next_token(&yaml["describe_cache_clusters_result"], Some("marker")),
         )
     }
 

@@ -47,11 +47,16 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(
-            self,
-            &yaml["describe_auto_scaling_groups_result"]["auto_scaling_groups"],
-            Some("next_token"),
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(
+                self,
+                &yaml["describe_auto_scaling_groups_result"]["auto_scaling_groups"],
+            ),
+            next_token(
+                &yaml["describe_auto_scaling_groups_result"],
+                Some("next_token"),
+            ),
         )
     }
 

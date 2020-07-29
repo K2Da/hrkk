@@ -54,11 +54,10 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(
-            self,
-            &yaml["list_dashboards_result"]["dashboard_entries"],
-            Some("next_token"),
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["list_dashboards_result"]["dashboard_entries"]),
+            next_token(&yaml["list_dashboards_result"], Some("next_token")),
         )
     }
 

@@ -250,7 +250,7 @@ pub(crate) trait AwsResource: Send + Sync {
         ExecuteTarget::ExecuteThis { parameter: None }
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>);
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>);
 
     fn header(&self) -> Vec<&'static str>;
 

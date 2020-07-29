@@ -44,8 +44,11 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        make_vec(self, &yaml["hosted_zones"], Some("marker"))
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["hosted_zones"]),
+            next_token(&yaml, Some("marker")),
+        )
     }
 
     fn header(&self) -> Vec<&'static str> {

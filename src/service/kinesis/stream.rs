@@ -48,8 +48,8 @@ impl AwsResource for Resource {
         })
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
-        let (rl, _) = make_vec(self, &yaml["stream_names"], None);
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        let rl = make_resource_list(self, &yaml["stream_names"]);
         let last_stream_name = match rl.last() {
             Some(last) => last.0.first().map(|s| s.clone()),
             None => None,
