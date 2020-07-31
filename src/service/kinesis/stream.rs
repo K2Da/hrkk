@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("stream_name"),
             service_name: "kinesis",
             resource_type_name: "stream",
+            header: vec!["name", "creation timestamp"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Post { target: "Kinesis_20131202.ListStreams", },
@@ -56,10 +57,6 @@ impl AwsResource for Resource {
             None => None,
         };
         (rl, last_stream_name)
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "creation timestamp"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {

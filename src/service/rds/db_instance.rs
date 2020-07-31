@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("db_instance_identifier"),
             service_name: "rds",
             resource_type_name: "db_instance",
+            header: vec!["status", "identifier"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -52,10 +53,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["describe_db_instances_result"]["db_instances"]),
             next_token(&yaml["describe_db_instances_result"], Some("marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["status", "identifier"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("function_name"),
             service_name: "lambda",
             resource_type_name: "function",
+            header: vec!["name", "runtime"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Get {
@@ -49,10 +50,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["functions"]),
             next_token(&yaml, Some("next_marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "runtime"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("cache_cluster_id"),
             service_name: "elasticache",
             resource_type_name: "cache_cluster",
+            header: vec!["engine", "cache_cluster_id"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -55,10 +56,6 @@ impl AwsResource for Resource {
             ),
             next_token(&yaml["describe_cache_clusters_result"], Some("marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["engine", "cache_cluster_id"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

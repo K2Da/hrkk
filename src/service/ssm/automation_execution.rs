@@ -6,11 +6,11 @@ pub(crate) struct Resource {
 }
 
 pub(crate) fn new() -> Resource {
-    Resource {
-        info: Info {
+    Resource { info: Info {
             key_attribute: Some("automation_execution_id"),
             service_name: "ssm",
             resource_type_name: "automation_execution",
+            header: vec!["status", "name", "time", "end at"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Post {
@@ -46,10 +46,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["automation_execution_metadata_list"]),
             next_token(&yaml, Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["status", "name", "time", "end at"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

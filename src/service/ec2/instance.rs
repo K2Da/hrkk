@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("instance_id"),
             service_name: "ec2",
             resource_type_name: "instance",
+            header: vec!["instance id", "state", "name"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -60,10 +61,6 @@ impl AwsResource for Resource {
         }
 
         (result, next_token(&yaml, Some("next_token")))
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["instance id", "state", "name"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

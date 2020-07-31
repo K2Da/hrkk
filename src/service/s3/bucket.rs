@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("name"),
             service_name: "s3",
             resource_type_name: "bucket",
+            header: vec!["name", "creation date"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -43,10 +44,6 @@ impl AwsResource for Resource {
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         (make_resource_list(self, &yaml["buckets"]), None)
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "creation date"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

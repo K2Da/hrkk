@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("alarm_arn"),
             service_name: "cloudwatch",
             resource_type_name: "alarm",
+            header: vec!["state", "name"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -66,10 +67,6 @@ impl AwsResource for Resource {
             .map(|y| (self.line(y, &None), y.clone()))
             .collect();
         (vec, next_token(&yaml, Some("next_token")))
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["state", "name"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

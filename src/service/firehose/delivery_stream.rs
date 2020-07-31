@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("delivery_stream_name"),
             service_name: "firehose",
             resource_type_name: "delivery_stream",
+            header: vec!["name", "create timestamp"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Post { target: "Firehose_20150804.ListDeliveryStreams", },
@@ -56,10 +57,6 @@ impl AwsResource for Resource {
             None => None,
         };
         (rl, last_stream_name)
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "create timestamp"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {

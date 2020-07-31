@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: None,
             service_name: "athena",
             resource_type_name: "query_execution",
+            header: vec!["query execution id", "state", "completion time"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Post { target: "AmazonAthena.ListQueryExecutions", },
@@ -23,7 +24,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
             },
             get_api: Some(GetApi {
-                param_path: vec!["query_execution", "query_execution_id"],
+                param_path: vec![],
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
                     path: ("/", None),
@@ -54,10 +55,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["query_execution_ids"]),
             next_token(&yaml, Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["query execution id", "state", "completion time"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {

@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("id"),
             service_name: "route53",
             resource_type_name: "hosted_zone",
+            header: vec!["id", "name"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/2013-04-01/hostedzone", None),
@@ -49,10 +50,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["hosted_zones"]),
             next_token(&yaml, Some("marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["id", "name"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

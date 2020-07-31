@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("name"),
             service_name: "ssm",
             resource_type_name: "document",
+            header: vec!["type", "name", "owner"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Post {
@@ -46,10 +47,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["document_identifiers"]),
             next_token(&yaml, Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["type", "name", "owner"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

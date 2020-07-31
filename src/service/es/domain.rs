@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("domain_name"),
             service_name: "es",
             resource_type_name: "domain",
+            header: vec!["name", "version"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
                     method: JsonListMethod::Get {
@@ -53,10 +54,6 @@ impl AwsResource for Resource {
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         (make_resource_list(self, &yaml["domain_names"]), None)
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "version"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {

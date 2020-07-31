@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("auto_scaling_group_name"),
             service_name: "autoscaling",
             resource_type_name: "auto_scaling_group",
+            header: vec!["name", "created"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -58,10 +59,6 @@ impl AwsResource for Resource {
                 Some("next_token"),
             ),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "created"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("dashboard"),
             service_name: "cloudwatch",
             resource_type_name: "dashboard",
+            header: vec!["name", "size", "modified", "body"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -60,10 +61,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["list_dashboards_result"]["dashboard_entries"]),
             next_token(&yaml["list_dashboards_result"], Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "size", "modified", "body"]
     }
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {

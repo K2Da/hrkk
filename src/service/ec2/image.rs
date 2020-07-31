@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("image_id"),
             service_name: "ec2",
             resource_type_name: "image",
+            header: vec!["name", "description"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -48,10 +49,6 @@ impl AwsResource for Resource {
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         (make_resource_list(self, &yaml["images_set"]), None)
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "description"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

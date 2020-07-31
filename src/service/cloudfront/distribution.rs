@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("id"),
             service_name: "cloudfront",
             resource_type_name: "distribution",
+            header: vec!["id", "comment"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/2020-05-31/distribution", None),
@@ -49,10 +50,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["items"]),
             next_token(&yaml, Some("marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["id", "comment"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("load_balancer_name"),
             service_name: "elb",
             resource_type_name: "load_balancer",
+            header: vec!["name", "type"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -55,10 +56,6 @@ impl AwsResource for Resource {
             ),
             next_token(&yaml["describe_load_balancers_result"], Some("marker")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "type"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

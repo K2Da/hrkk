@@ -77,6 +77,7 @@ pub(crate) struct Info {
     key_attribute: Option<&'static str>,
     service_name: &'static str,
     resource_type_name: &'static str,
+    pub(crate) header: Vec<&'static str>,
     pub(crate) list_api: ListApi,
     pub(crate) get_api: Option<GetApi>,
     pub(crate) resource_url: Option<ResourceUrl>,
@@ -254,8 +255,6 @@ pub(crate) trait AwsResource: Send + Sync {
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>);
-
-    fn header(&self) -> Vec<&'static str>;
 
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String>;
 

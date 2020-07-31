@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("stack_id"),
             service_name: "cloudformation",
             resource_type_name: "stack",
+            header: vec!["name", "status", "creation time"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -49,10 +50,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["describe_stacks_result"]["stacks"]),
             next_token(&yaml["describe_stacks_result"], Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "status", "creation time"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

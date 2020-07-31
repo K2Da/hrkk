@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("launch_template_id"),
             service_name: "ec2",
             resource_type_name: "launch_template",
+            header: vec!["name", "latest version", "default version"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -52,10 +53,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["launch_templates"]),
             next_token(&yaml, Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name", "latest version", "default version"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

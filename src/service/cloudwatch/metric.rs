@@ -11,6 +11,7 @@ pub(crate) fn new() -> Resource {
             key_attribute: Some("metric_name"),
             service_name: "cloudwatch",
             resource_type_name: "metric",
+            header: vec!["name space", "name"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -49,10 +50,6 @@ impl AwsResource for Resource {
             make_resource_list(self, &yaml["list_metrics_result"]["metrics"]),
             next_token(&yaml["list_metrics_result"], Some("next_token")),
         )
-    }
-
-    fn header(&self) -> Vec<&'static str> {
-        vec!["name space", "name"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {

@@ -100,7 +100,14 @@ impl Resources {
             .iter()
             .map(|item| item.row.iter().map(|s| s.len()).collect())
             .collect();
-        row_lengths.push(self.resource.header().iter().map(|s| s.len()).collect());
+        row_lengths.push(
+            self.resource
+                .info()
+                .header
+                .iter()
+                .map(|s| s.len())
+                .collect(),
+        );
         self.column_max_lengths = super::column_max_list(&row_lengths);
     }
 
@@ -187,7 +194,7 @@ impl Resources {
     {
         let filtered_items = table::filtered_items(&self.items, &self.filtered_indexes);
         self.last_height = area.height;
-        let header = self.resource.header();
+        let header = self.resource.info().header.clone();
         let column_width = self.column_width();
         let title = self.title(api_call);
         let selected_indexes = self.selected_indexes.clone();
