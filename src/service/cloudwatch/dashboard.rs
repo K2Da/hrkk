@@ -28,6 +28,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
             },
             get_api: Some(GetApi {
+                param_path: vec!["dashboard_name"],
                 format: GetFormat::Xml(GetXml {
                     service_name: "monitoring",
                     action: "GetDashboard",

@@ -23,6 +23,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
             },
             get_api: Some(GetApi {
+                param_path: vec!["query_execution", "query_execution_id"],
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
                     path: ("/", None),

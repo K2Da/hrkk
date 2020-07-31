@@ -523,14 +523,14 @@ impl Scene {
 
     fn call_get_api(&mut self, item: &Item, ui_state: &mut UiState) {
         let resource_index = item.index;
-        let parameter = item.get_parameter();
+        let list_yaml = item.list_yaml.clone();
         let resource = self.resource.clone();
         let mut tx = self.base.tx.clone();
         let opts = self.base.opts.clone();
         let start = Local::now();
 
         tokio::spawn(async move {
-            match crate::api::get::call(&*resource, &parameter, &opts).await {
+            match crate::api::get::call(&*resource, &list_yaml, &opts).await {
                 Ok(yaml) => {
                     let _ = tx
                         .send(Event::GetResponse {

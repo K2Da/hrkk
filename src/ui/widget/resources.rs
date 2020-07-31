@@ -28,12 +28,6 @@ impl table::Matchable for Item {
     }
 }
 
-impl Item {
-    pub(crate) fn get_parameter(&self) -> String {
-        self.row.first().unwrap_or(&"".to_owned()).to_string()
-    }
-}
-
 #[derive(Clone)]
 pub(crate) struct Resources {
     pub(crate) state: TableState,

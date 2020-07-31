@@ -25,6 +25,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames",
             },
             get_api: Some(GetApi {
+                param_path: vec!["domain_name"],
                 format: GetFormat::Json(GetJson {
                     method: Method::Get,
                     path: ("/2015-01-01/es/domain/{domain_name}", Some("domain_name")),

@@ -29,6 +29,7 @@ pub(crate) fn new() -> Resource {
                     "https://docs.aws.amazon.com/acm/latest/APIReference/API_ListCertificates.html",
             },
             get_api: Some(GetApi {
+                param_path: vec!["certificate_arn"],
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
                     path: ("/", None),
@@ -63,13 +64,13 @@ impl AwsResource for Resource {
     }
 
     fn header(&self) -> Vec<&'static str> {
-        vec!["arn", "domain name"]
+        vec!["domain name", "arn"]
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["certificate_arn"]),
             show::raw(&list["domain_name"]),
+            show::raw(&list["certificate_arn"]),
         ]
     }
 

@@ -23,6 +23,7 @@ pub(crate) fn new() -> Resource {
                 document: "https://docs.aws.amazon.com/firehose/latest/APIReference/API_ListDeliveryStreams.html",
             },
             get_api: Some(GetApi {
+                param_path: vec![],
                 format: GetFormat::Json(GetJson {
                     method: Method::Post,
                     path: ("/", None),
