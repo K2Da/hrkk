@@ -110,6 +110,13 @@ impl Opts {
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]
 pub(crate) enum SubCommand {
+    /// ACM
+    #[structopt(name = "acm")]
+    Acm {
+        #[structopt(subcommand)]
+        command: AcmCommand,
+    },
+
     /// Athena
     #[structopt(name = "athena")]
     Athena {
@@ -340,6 +347,12 @@ pub(crate) enum CloudwatchCommand {
     Metric,
     #[structopt(name = "dashboard")]
     Dashboard,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone)]
+pub(crate) enum AcmCommand {
+    #[structopt(name = "certificate")]
+    Certificate,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone)]

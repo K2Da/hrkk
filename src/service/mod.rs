@@ -6,6 +6,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 use yaml_rust::Yaml;
 
+pub(crate) mod acm;
 pub(crate) mod athena;
 pub(crate) mod autoscaling;
 pub(crate) mod cloudformation;
@@ -29,6 +30,7 @@ pub(crate) type ResourceList = Vec<(Vec<String>, Yaml)>;
 
 pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
     vec![
+        Box::new(acm::certificate::new()),
         Box::new(athena::query_execution::new()),
         Box::new(autoscaling::auto_scaling_group::new()),
         Box::new(cloudformation::stack::new()),
