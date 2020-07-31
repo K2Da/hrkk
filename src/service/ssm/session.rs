@@ -101,8 +101,8 @@ impl AwsResource for Resource {
             .section(
                 Section::new(&yaml["output_url"])
                     .string_name("output url")
-                    .raw1("cloudwatch", "cloud_watch_output_url")
-                    .raw1("s3", "s3_output_url"),
+                    .raw_n("cloudwatch", &["cloud_watch_output_url"])
+                    .raw_n("s3", &["s3_output_url"]),
             )
     }
 }

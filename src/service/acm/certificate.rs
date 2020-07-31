@@ -80,9 +80,9 @@ impl AwsResource for Resource {
                 Section::new(&merged)
                     .yaml_name2(("list", "domain_name"))
                     .resource_url(self.console_url(list, get, region))
-                    .raw2("arn", ("list", "certificate_arn"))
-                    .raw2("certificate", ("get", "certificate"))
-                    .raw2("certificate chain", ("get", "certificate_chain"))
+                    .raw_n("arn", &["list", "certificate_arn"])
+                    .raw_n("certificate", &["get", "certificate"])
+                    .raw_n("certificate chain", &["get", "certificate_chain"])
             }
             _ => Section::new(list)
                 .yaml_name2(("list", "domain_name"))

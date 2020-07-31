@@ -89,9 +89,9 @@ impl AwsResource for Resource {
                 Section::new(&merged)
                     .yaml_name2(("list", "dashboard_name"))
                     .resource_url(self.console_url(list, get, region))
-                    .byte2("size", ("list", "size"))
-                    .time2("last modified", ("list", "last_modified"))
-                    .raw3("body", ("get", "get_dashboard_result", "dashboard_body"))
+                    .byte_n("size", &["list", "size"])
+                    .time_n("last modified", &["list", "last_modified"])
+                    .raw_n("body", &["get", "get_dashboard_result", "dashboard_body"])
             }
             None => Section::new(list)
                 .yaml_name("dashboard_name")

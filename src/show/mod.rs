@@ -1,4 +1,5 @@
 use crate::color;
+use crate::yaml_path::apply_path;
 use std::cmp::max;
 use tui::style::Color;
 use tui::style::Style;
@@ -140,18 +141,8 @@ impl Section {
         self.child(&key.replace("_", " "), &raw)
     }
 
-    pub(crate) fn raw1(self, name: &str, key: &str) -> Self {
-        let raw = self::raw(&self.yaml[key]);
-        self.child(name, &raw)
-    }
-
-    pub(crate) fn raw2(self, name: &str, key: (&str, &str)) -> Self {
-        let raw = self::raw(&self.yaml[key.0][key.1]);
-        self.child(name, &raw)
-    }
-
-    pub(crate) fn raw3(self, name: &str, key: (&str, &str, &str)) -> Self {
-        let raw = self::raw(&self.yaml[key.0][key.1][key.2]);
+    pub(crate) fn raw_n(self, name: &str, path: &[&str]) -> Self {
+        let raw = self::raw(apply_path(&self.yaml, path));
         self.child(name, &raw)
     }
 
@@ -164,13 +155,8 @@ impl Section {
         self.child(&key.replace("_", " "), &time)
     }
 
-    pub(crate) fn time2(self, name: &str, key: (&str, &str)) -> Self {
-        let time = self::time(&self.yaml[key.0][key.1]);
-        self.child(name, &time)
-    }
-
-    pub(crate) fn time3(self, name: &str, key: (&str, &str, &str)) -> Self {
-        let time = self::time(&self.yaml[key.0][key.1][key.2]);
+    pub(crate) fn time_n(self, name: &str, path: &[&str]) -> Self {
+        let time = self::time(apply_path(&self.yaml, path));
         self.child(name, &time)
     }
 
@@ -179,18 +165,13 @@ impl Section {
         self.child(&key.replace("_", " "), &byte)
     }
 
-    pub(crate) fn byte2(self, name: &str, key: (&str, &str)) -> Self {
-        let byte = self::byte(&self.yaml[key.0][key.1]);
+    pub(crate) fn byte_n(self, name: &str, path: &[&str]) -> Self {
+        let byte = self::byte(apply_path(&self.yaml, path));
         self.child(name, &byte)
     }
 
-    pub(crate) fn byte3(self, name: &str, key: (&str, &str, &str)) -> Self {
-        let byte = self::byte(&self.yaml[key.0][key.1][key.2]);
-        self.child(name, &byte)
-    }
-
-    pub(crate) fn milli_sec3(self, name: &str, key: (&str, &str, &str)) -> Self {
-        let sec = self::milli_sec(&self.yaml[key.0][key.1][key.2]);
+    pub(crate) fn milli_sec_n(self, name: &str, path: &[&str]) -> Self {
+        let sec = self::milli_sec(apply_path(&self.yaml, path));
         self.child(name, &sec)
     }
 

@@ -67,7 +67,7 @@ impl AwsResource for Resource {
         Section::new(list)
             .yaml_name("stack_name")
             .resource_url(self.console_url(list, get, region))
-            .raw1("status", "stack_status")
+            .raw_n("status", &["stack_status"])
             .raw("description")
             .raw("creation_time")
             .raw("last_updated_time")

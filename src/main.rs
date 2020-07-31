@@ -8,8 +8,9 @@ mod help;
 mod log;
 mod opts;
 mod service;
-pub(crate) mod show;
+mod show;
 mod ui;
+mod yaml_path;
 
 #[tokio::main]
 async fn main() {

@@ -75,7 +75,7 @@ impl AwsResource for Resource {
             .raw("load_balancer_arn")
             .raw("type")
             .raw("scheme")
-            .raw2("state", ("state", "code"))
+            .raw_n("state", &["state", "code"])
             .raw("canonical_hosted_zone_id")
     }
 

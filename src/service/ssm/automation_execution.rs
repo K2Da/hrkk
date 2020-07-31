@@ -65,7 +65,7 @@ impl AwsResource for Resource {
         Section::new(list)
             .yaml_name("automation_execution_id")
             .resource_url(self.console_url(list, get, region))
-            .raw1("status", "automation_execution_status")
+            .raw_n("status", &["automation_execution_status"])
             .duration(
                 "execution time",
                 ("execution_start_time", "execution_end_time"),

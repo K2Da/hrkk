@@ -81,7 +81,7 @@ impl AwsResource for Resource {
             .raw("instance_id")
             .raw("instance_type")
             .raw("architecture")
-            .raw2("state", ("instance_state", "name"))
+            .raw_n("state", &["instance_state", "name"])
             .section(
                 Section::new(list)
                     .string_name("tags")
@@ -92,7 +92,7 @@ impl AwsResource for Resource {
                     .string_name("network")
                     .raw("subnet_id")
                     .raw("private_ip_address")
-                    .raw2("availability zone", ("placement", "availability_zone")),
+                    .raw_n("availability zone", &["placement", "availability_zone"]),
             )
             .section(
                 Section::new(list)

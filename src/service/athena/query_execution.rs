@@ -76,27 +76,27 @@ impl AwsResource for Resource {
             Some(yaml) => Section::new(&yaml)
                 .yaml_name2(("query_execution", "query_execution_id"))
                 .resource_url(self.console_url(list, get, region))
-                .raw2("query", ("query_execution", "query"))
-                .raw3(
+                .raw_n("query", &["query_execution", "query"])
+                .raw_n(
                     "output",
-                    ("query_execution", "result_configuration", "output_location"),
+                    &["query_execution", "result_configuration", "output_location"],
                 )
-                .raw3("state", ("query_execution", "status", "state"))
-                .time3(
+                .raw_n("state", &["query_execution", "status", "state"])
+                .time_n(
                     "completion time",
-                    ("query_execution", "status", "completion_date_time"),
+                    &["query_execution", "status", "completion_date_time"],
                 )
-                .byte3(
+                .byte_n(
                     "data scanned",
-                    ("query_execution", "statistics", "data_scanned_in_bytes"),
+                    &["query_execution", "statistics", "data_scanned_in_bytes"],
                 )
-                .milli_sec3(
+                .milli_sec_n(
                     "execution sec",
-                    (
+                    &[
                         "query_execution_detail",
                         "stats",
                         "engine_execution_time_in_millis",
-                    ),
+                    ],
                 ),
         }
     }

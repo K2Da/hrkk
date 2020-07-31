@@ -88,10 +88,10 @@ impl AwsResource for Resource {
             .section(
                 Section::new(list)
                     .string_name("state")
-                    .raw1("value", "state_value")
-                    .raw1("reason", "state_reason")
-                    .raw1("reason data", "state_reason_data")
-                    .raw1("updated", "state_updated_timestamp"),
+                    .raw_n("value", &["state_value"])
+                    .raw_n("reason", &["state_reason"])
+                    .raw_n("reason data", &["state_reason_data"])
+                    .raw_n("updated", &["state_updated_timestamp"]),
             )
     }
 
