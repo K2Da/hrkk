@@ -8,6 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: Some(SubCommand::Acm {
+                command: Acm::Certificate,
+            }),
             key_attribute: Some("certificate_arn"),
             service_name: "acm",
             resource_type_name: "certificate",
@@ -49,12 +52,6 @@ pub(crate) fn new() -> Resource {
 impl AwsResource for Resource {
     fn info(&self) -> &Info {
         &self.info
-    }
-
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Acm {
-            command: AcmCommand::Certificate,
-        })
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {

@@ -8,6 +8,7 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: Some(SubCommand::Autoscaling { command: Autoscaling::AutoScalingGroup }),
             key_attribute: Some("auto_scaling_group_name"),
             service_name: "autoscaling",
             resource_type_name: "auto_scaling_group",
@@ -40,12 +41,6 @@ pub(crate) fn new() -> Resource {
 impl AwsResource for Resource {
     fn info(&self) -> &Info {
         &self.info
-    }
-
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Autoscaling {
-            command: AutoscalingCommand::AutoScalingGroup,
-        })
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {

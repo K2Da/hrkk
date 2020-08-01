@@ -1,10 +1,11 @@
 use crate::error::Error::*;
 use crate::error::Result;
 use rusoto_core::Region;
+use serde::Serialize;
 use std::str::FromStr;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug, Clone)]
+#[derive(StructOpt, Debug, Clone, Serialize)]
 #[structopt(name = "hrkk")]
 pub(crate) struct Opts {
     /// Initial aws request count for list- or describe- api. Hit "M" to fetch more.
@@ -108,104 +109,104 @@ impl Opts {
     }
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
 pub(crate) enum SubCommand {
     /// ACM
     #[structopt(name = "acm")]
     Acm {
         #[structopt(subcommand)]
-        command: AcmCommand,
+        command: Acm,
     },
 
     /// Athena
     #[structopt(name = "athena")]
     Athena {
         #[structopt(subcommand)]
-        command: AthenaCommand,
+        command: Athena,
     },
 
     /// AutoScaling
     #[structopt(name = "autoscaling")]
     Autoscaling {
         #[structopt(subcommand)]
-        command: AutoscalingCommand,
+        command: Autoscaling,
     },
 
     /// Cloudformation
     #[structopt(name = "cloudformation")]
     Cloudformation {
         #[structopt(subcommand)]
-        command: CloudformationCommand,
+        command: Cloudformation,
     },
 
     /// Cloudfront
     #[structopt(name = "cloudfront")]
     Cloudfront {
         #[structopt(subcommand)]
-        command: CloudfrontCommand,
+        command: Cloudfront,
     },
 
     /// CloudWatch
     #[structopt(name = "cloudwatch")]
     Cloudwatch {
         #[structopt(subcommand)]
-        command: CloudwatchCommand,
+        command: Cloudwatch,
     },
 
     /// Ec2
     #[structopt(name = "ec2")]
     Ec2 {
         #[structopt(subcommand)]
-        command: Ec2Command,
+        command: Ec2,
     },
 
     /// ElastiCache
     #[structopt(name = "elasticache")]
     Elasticache {
         #[structopt(subcommand)]
-        command: ElasticacheCommand,
+        command: Elasticache,
     },
 
     /// Elastic Load Balancing
     #[structopt(name = "elb")]
     Elb {
         #[structopt(subcommand)]
-        command: ElbCommand,
+        command: Elb,
     },
 
     /// Elasticsearch Service
     #[structopt(name = "es")]
     Es {
         #[structopt(subcommand)]
-        command: EsCommand,
+        command: Es,
     },
 
     /// Firehose Service
     #[structopt(name = "es")]
     Firehose {
         #[structopt(subcommand)]
-        command: FirehoseCommand,
+        command: Firehose,
     },
 
     /// Kinesis
     #[structopt(name = "kinesis")]
     Kinesis {
         #[structopt(subcommand)]
-        command: KinesisCommand,
+        command: Kinesis,
     },
 
     /// Lambda
     #[structopt(name = "lambda")]
     Lambda {
         #[structopt(subcommand)]
-        command: LambdaCommand,
+        command: Lambda,
     },
 
     /// Cloudwatch Logs.
     #[structopt(name = "logs")]
     Logs {
         #[structopt(subcommand)]
-        command: LogsCommand,
+        command: Logs,
     },
 
     /// RDS.
@@ -219,7 +220,7 @@ pub(crate) enum SubCommand {
     #[structopt(name = "route53")]
     Route53 {
         #[structopt(subcommand)]
-        command: Route53Command,
+        command: Route53,
     },
 
     /// S3
@@ -233,12 +234,12 @@ pub(crate) enum SubCommand {
     #[structopt(name = "ssm")]
     Ssm {
         #[structopt(subcommand)]
-        command: SsmCommand,
+        command: Ssm,
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum Ec2Command {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Ec2 {
     #[structopt(name = "instance")]
     Instance,
     #[structopt(name = "launch-template")]
@@ -253,38 +254,38 @@ pub(crate) enum Ec2Command {
     Vpc,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum ElasticacheCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elasticache {
     #[structopt(name = "cache-cluster")]
     CacheCluster,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum ElbCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elb {
     #[structopt(name = "load-balancer")]
     LoadBalancer,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum EsCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Es {
     #[structopt(name = "domain")]
     Domain,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum FirehoseCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Firehose {
     #[structopt(name = "delivery-stream")]
     DeliveryStream,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum KinesisCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Kinesis {
     #[structopt(name = "stream")]
     Stream,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum LogsCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Logs {
     #[structopt(name = "log-group")]
     LogGroup,
     #[structopt(name = "log-stream")]
@@ -294,26 +295,26 @@ pub(crate) enum LogsCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum LambdaCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Lambda {
     #[structopt(name = "function")]
     Function,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
 pub(crate) enum RdsCommand {
     #[structopt(name = "db-instance")]
     DbInstance,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
 pub(crate) enum S3Command {
     #[structopt(name = "bucket")]
     Bucket,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum SsmCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Ssm {
     #[structopt(name = "automation-execution")]
     AutomationExecution,
     #[structopt(name = "document")]
@@ -325,20 +326,20 @@ pub(crate) enum SsmCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum CloudformationCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudformation {
     #[structopt(name = "stack")]
     Stack,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum CloudfrontCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudfront {
     #[structopt(name = "distribution")]
     Distribution,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum CloudwatchCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudwatch {
     #[structopt(name = "alarm")]
     Alarm,
     #[structopt(name = "alarm-history")]
@@ -349,26 +350,26 @@ pub(crate) enum CloudwatchCommand {
     Dashboard,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum AcmCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Acm {
     #[structopt(name = "certificate")]
     Certificate,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum AthenaCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Athena {
     #[structopt(name = "query-execution")]
     QueryExecution,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum AutoscalingCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Autoscaling {
     #[structopt(name = "auto-scaling-group")]
     AutoScalingGroup,
 }
 
-#[derive(StructOpt, Debug, PartialEq, Clone)]
-pub(crate) enum Route53Command {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Route53 {
     #[structopt(name = "hosted-zone")]
     HostedZone,
     #[structopt(name = "resource-record-set")]

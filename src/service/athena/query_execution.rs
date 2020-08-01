@@ -8,6 +8,7 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: Some(SubCommand::Athena { command: Athena::QueryExecution }),
             key_attribute: None,
             service_name: "athena",
             resource_type_name: "query_execution",
@@ -42,12 +43,6 @@ pub(crate) fn new() -> Resource {
 impl AwsResource for Resource {
     fn info(&self) -> &Info {
         &self.info
-    }
-
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Athena {
-            command: AthenaCommand::QueryExecution,
-        })
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {

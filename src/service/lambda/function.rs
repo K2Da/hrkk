@@ -8,6 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: Some(SubCommand::Lambda {
+                command: Lambda::Function,
+            }),
             key_attribute: Some("function_name"),
             service_name: "lambda",
             resource_type_name: "function",
@@ -37,12 +40,6 @@ pub(crate) fn new() -> Resource {
 impl AwsResource for Resource {
     fn info(&self) -> &Info {
         &self.info
-    }
-
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Lambda {
-            command: LambdaCommand::Function,
-        })
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {

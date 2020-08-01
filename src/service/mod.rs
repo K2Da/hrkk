@@ -74,6 +74,7 @@ pub(crate) fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
 
 #[derive(Serialize)]
 pub(crate) struct Info {
+    sub_command: Option<SubCommand>,
     key_attribute: Option<&'static str>,
     service_name: &'static str,
     resource_type_name: &'static str,
@@ -235,12 +236,10 @@ impl Clone for Box<dyn AwsResource> {
 pub(crate) trait AwsResource: Send + Sync {
     fn info(&self) -> &Info;
 
-    fn matching_sub_command(&self) -> Option<SubCommand>;
-
     fn take_command(&self, sub_command: &SubCommand, _opts: &Opts) -> Result<ExecuteTarget> {
-        match self.matching_sub_command() {
+        match &self.info().sub_command {
             Some(matching_command) => {
-                if &matching_command == sub_command {
+                if matching_command == sub_command {
                     Ok(ExecuteTarget::ExecuteThis { parameter: None })
                 } else {
                     Ok(ExecuteTarget::Null)

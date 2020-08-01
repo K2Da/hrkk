@@ -8,6 +8,7 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: Some(SubCommand::Cloudwatch { command: Cloudwatch::Metric }),
             key_attribute: Some("metric_name"),
             service_name: "cloudwatch",
             resource_type_name: "metric",
@@ -37,12 +38,6 @@ pub(crate) fn new() -> Resource {
 impl AwsResource for Resource {
     fn info(&self) -> &Info {
         &self.info
-    }
-
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Cloudwatch {
-            command: CloudwatchCommand::Metric,
-        })
     }
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {

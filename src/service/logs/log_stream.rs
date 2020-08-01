@@ -8,6 +8,7 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: None,
             key_attribute: Some("log_stream_name"),
             service_name: "logs",
             resource_type_name: "log_stream",
@@ -36,13 +37,9 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        None
-    }
-
     fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<ExecuteTarget> {
         if let SubCommand::Logs {
-            command: LogsCommand::LogStream { log_group_name },
+            command: Logs::LogStream { log_group_name },
         } = sub_command
         {
             match log_group_name {

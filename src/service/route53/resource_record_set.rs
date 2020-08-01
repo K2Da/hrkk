@@ -8,6 +8,7 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
+            sub_command: None,
             key_attribute: Some("name"),
             service_name: "route53",
             resource_type_name: "resource_record_set",
@@ -39,13 +40,9 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        None
-    }
-
     fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<ExecuteTarget> {
         if let SubCommand::Route53 {
-            command: Route53Command::ResourceRecordSet { zone_id },
+            command: Route53::ResourceRecordSet { zone_id },
         } = sub_command
         {
             match zone_id {
