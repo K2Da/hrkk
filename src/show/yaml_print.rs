@@ -67,10 +67,9 @@ impl YamlTexts {
 
     pub fn wrap(&mut self, span: &str, str: &str) {
         let header_width = self.current_width;
-        for (i, val) in str
-            .chars()
-            .collect::<Vec<char>>()
-            .chunks((self.width - self.current_width - 1) as usize)
+
+        for (i, val) in super::split(&str, self.width - self.current_width as isize)
+            .iter()
             .enumerate()
         {
             if i != 0 {
@@ -78,7 +77,7 @@ impl YamlTexts {
                 self.raw(span);
                 self.raw(&" ".repeat((header_width - span.width_cjk() as isize) as usize));
             }
-            self.raw(&val.iter().collect::<String>());
+            self.raw(&val);
         }
     }
 
