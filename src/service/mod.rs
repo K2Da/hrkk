@@ -14,6 +14,7 @@ pub(crate) mod cloudfront;
 pub(crate) mod cloudwatch;
 pub(crate) mod ec2;
 pub(crate) mod elasticache;
+pub(crate) mod elastictranscoder;
 pub(crate) mod elb;
 pub(crate) mod es;
 pub(crate) mod firehose;
@@ -46,6 +47,7 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(ec2::subnet::new()),
         Box::new(ec2::vpc::new()),
         Box::new(elasticache::cache_cluster::new()),
+        Box::new(elastictranscoder::pipeline::new()),
         Box::new(elb::load_balancer::new()),
         Box::new(es::domain::new()),
         Box::new(firehose::delivery_stream::new()),

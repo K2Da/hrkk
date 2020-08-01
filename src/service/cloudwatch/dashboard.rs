@@ -80,7 +80,7 @@ impl AwsResource for Resource {
             Some(get_yaml) => {
                 let merged = merge_yamls(list, get_yaml);
                 Section::new(&merged)
-                    .yaml_name2(("list", "dashboard_name"))
+                    .yaml_name_n(&["list", "dashboard_name"])
                     .resource_url(self.console_url(list, get, region))
                     .byte_n("size", &["list", "size"])
                     .time_n("last modified", &["list", "last_modified"])

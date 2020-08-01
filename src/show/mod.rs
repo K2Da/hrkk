@@ -112,8 +112,8 @@ impl Section {
         self
     }
 
-    pub(crate) fn yaml_name2(mut self, key: (&str, &str)) -> Self {
-        self.name = Some(Name::Yaml(self.yaml[key.0][key.1].clone()));
+    pub(crate) fn yaml_name_n(mut self, path: &[&str]) -> Self {
+        self.name = Some(Name::Yaml(apply_path(&self.yaml, path).clone()));
         self
     }
 

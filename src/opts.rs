@@ -167,6 +167,13 @@ pub(crate) enum SubCommand {
         command: Elasticache,
     },
 
+    /// Elastictranscoder
+    #[structopt(name = "elastictranscoder")]
+    Elastictranscoder {
+        #[structopt(subcommand)]
+        command: Elastictranscoder,
+    },
+
     /// Elastic Load Balancing
     #[structopt(name = "elb")]
     Elb {
@@ -258,6 +265,12 @@ pub(crate) enum Ec2 {
 pub(crate) enum Elasticache {
     #[structopt(name = "cache-cluster")]
     CacheCluster,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elastictranscoder {
+    #[structopt(name = "pipeline")]
+    Pipeline,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]

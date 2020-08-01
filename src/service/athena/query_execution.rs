@@ -67,7 +67,7 @@ impl AwsResource for Resource {
         match get {
             None => Section::new(list),
             Some(yaml) => Section::new(&yaml)
-                .yaml_name2(("query_execution", "query_execution_id"))
+                .yaml_name_n(&["query_execution", "query_execution_id"])
                 .resource_url(self.console_url(list, get, region))
                 .raw_n("query", &["query_execution", "query"])
                 .raw_n(

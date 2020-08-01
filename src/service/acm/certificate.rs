@@ -73,14 +73,14 @@ impl AwsResource for Resource {
             Some(get_yaml) => {
                 let merged = merge_yamls(list, get_yaml);
                 Section::new(&merged)
-                    .yaml_name2(("list", "domain_name"))
+                    .yaml_name_n(&["list", "domain_name"])
                     .resource_url(self.console_url(list, get, region))
                     .raw_n("arn", &["list", "certificate_arn"])
                     .raw_n("certificate", &["get", "certificate"])
                     .raw_n("certificate chain", &["get", "certificate_chain"])
             }
             _ => Section::new(list)
-                .yaml_name2(("list", "domain_name"))
+                .yaml_name_n(&["list", "domain_name"])
                 .resource_url(self.console_url(list, get, region)),
         }
     }
