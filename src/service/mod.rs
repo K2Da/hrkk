@@ -18,6 +18,7 @@ pub(crate) mod elastictranscoder;
 pub(crate) mod elb;
 pub(crate) mod es;
 pub(crate) mod firehose;
+pub(crate) mod iam;
 pub(crate) mod kinesis;
 pub(crate) mod lambda;
 pub(crate) mod logs;
@@ -51,6 +52,8 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(elb::load_balancer::new()),
         Box::new(es::domain::new()),
         Box::new(firehose::delivery_stream::new()),
+        Box::new(iam::group::new()),
+        Box::new(iam::user::new()),
         Box::new(kinesis::stream::new()),
         Box::new(lambda::function::new()),
         Box::new(logs::log_group::new()),

@@ -195,6 +195,13 @@ pub(crate) enum SubCommand {
         command: Firehose,
     },
 
+    /// IAM
+    #[structopt(name = "iam")]
+    Iam {
+        #[structopt(subcommand)]
+        command: Iam,
+    },
+
     /// Kinesis
     #[structopt(name = "kinesis")]
     Kinesis {
@@ -289,6 +296,18 @@ pub(crate) enum Es {
 pub(crate) enum Firehose {
     #[structopt(name = "delivery-stream")]
     DeliveryStream,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Iam {
+    #[structopt(name = "user")]
+    User,
+    #[structopt(name = "group")]
+    Group,
+    #[structopt(name = "role")]
+    Role,
+    #[structopt(name = "policy")]
+    Policy,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
