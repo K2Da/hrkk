@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Ec2 { command: Ec2::LaunchTemplate }),
+            sub_command: Some(SubCommand::Ec2 {
+                command: Ec2::LaunchTemplate,
+            }),
             key_attribute: Some("launch_template_id"),
             service_name: "ec2",
             resource_type_name: "launch_template",
@@ -30,10 +32,14 @@ pub(crate) fn new() -> Resource {
                     ],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeLaunchTemplates.html",
+                document: DocumentUrl(
+                    "AWSEC2/latest/APIReference/API_DescribeLaunchTemplates.html",
+                ),
             },
             get_api: None,
-            resource_url: Some(Regional("ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}")),
+            resource_url: Some(Regional(
+                "ec2/v2/home?#LaunchTemplateDetails:launchTemplateId={template_id}",
+            )),
         },
     }
 }

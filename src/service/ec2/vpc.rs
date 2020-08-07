@@ -27,8 +27,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![("Action", "DescribeVpcs"), ("Version", "2016-11-15")],
                     region: None,
                 }),
-                document:
-                    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html",
+                document: DocumentUrl("AWSEC2/latest/APIReference/API_DescribeVpcs.html"),
             },
             get_api: None,
             resource_url: Some(Regional("vpc/home?#vpcs:search={vpc_id}")),

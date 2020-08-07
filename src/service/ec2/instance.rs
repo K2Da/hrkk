@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Ec2 { command: Ec2::Instance }),
+            sub_command: Some(SubCommand::Ec2 {
+                command: Ec2::Instance,
+            }),
             key_attribute: Some("instance_id"),
             service_name: "ec2",
             resource_type_name: "instance",
@@ -27,12 +29,10 @@ pub(crate) fn new() -> Resource {
                     params: vec![("Action", "DescribeInstances"), ("Version", "2016-11-15")],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html",
+                document: DocumentUrl("AWSEC2/latest/APIReference/API_DescribeInstances.html"),
             },
             get_api: None,
-            resource_url: Some(Regional(
-                "ec2/v2/home?#Instances:search={instance_id}",
-            )),
+            resource_url: Some(Regional("ec2/v2/home?#Instances:search={instance_id}")),
         },
     }
 }

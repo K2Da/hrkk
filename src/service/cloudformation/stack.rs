@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Cloudformation { command: Cloudformation::Stack }),
+            sub_command: Some(SubCommand::Cloudformation {
+                command: Cloudformation::Stack,
+            }),
             key_attribute: Some("stack_id"),
             service_name: "cloudformation",
             resource_type_name: "stack",
@@ -21,16 +23,17 @@ pub(crate) fn new() -> Resource {
                     iteration_tag: vec!["member"],
                     limit: None,
                     token_name: "NextToken",
-                    params: vec![
-                        ("Action", "DescribeStacks"),
-                        ("Version", "2010-05-15")
-                    ],
+                    params: vec![("Action", "DescribeStacks"), ("Version", "2010-05-15")],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
+                document: DocumentUrl(
+                    "AWSCloudFormation/latest/APIReference/API_DescribeStacks.html",
+                ),
             },
             get_api: None,
-            resource_url: Some(Regional("cloudformation/home?#/stacks/stackinfo?stackId={stack_id}")),
+            resource_url: Some(Regional(
+                "cloudformation/home?#/stacks/stackinfo?stackId={stack_id}",
+            )),
         },
     }
 }

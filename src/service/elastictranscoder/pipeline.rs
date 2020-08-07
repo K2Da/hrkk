@@ -26,7 +26,9 @@ pub(crate) fn new() -> Resource {
                     token_name: Some("PageToken"),
                     parameter_name: None,
                 }),
-                document: "",
+                document: DocumentUrl(
+                    "elastictranscoder/latest/developerguide/list-pipelines.html",
+                ),
             },
             get_api: None,
             resource_url: Some(Regional("elastictranscoder/home?#pipeline-details:{id}")),

@@ -29,7 +29,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![("Action", "ListGroups"), ("Version", "2010-05-08")],
                     region: Some(Region::UsEast1),
                 }),
-                document: "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListGroups.html",
+                document: DocumentUrl("IAM/latest/APIReference/API_ListGroups.html"),
             },
             get_api: None,
             resource_url: Some(Global("iam/home?#/groups/{group_name}")),

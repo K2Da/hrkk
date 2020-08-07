@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Cloudwatch { command: Cloudwatch::AlarmHistory }),
+            sub_command: Some(SubCommand::Cloudwatch {
+                command: Cloudwatch::AlarmHistory,
+            }),
             key_attribute: Some("alarm_name"),
             service_name: "cloudwatch",
             resource_type_name: "alarm_history",
@@ -26,16 +28,16 @@ pub(crate) fn new() -> Resource {
                     token_name: "NextToken",
                     params: vec![
                         ("Action", "DescribeAlarmHistory"),
-                        ("Version", "2010-08-01")
+                        ("Version", "2010-08-01"),
                     ],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarmHistory.html",
+                document: DocumentUrl(
+                    "AmazonCloudWatch/latest/APIReference/API_DescribeAlarmHistory.html",
+                ),
             },
             get_api: None,
-            resource_url: Some(
-                Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")
-            ),
+            resource_url: Some(Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")),
         },
     }
 }

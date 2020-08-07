@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Elb { command: Elb::LoadBalancer }),
+            sub_command: Some(SubCommand::Elb {
+                command: Elb::LoadBalancer,
+            }),
             key_attribute: Some("load_balancer_name"),
             service_name: "elb",
             resource_type_name: "load_balancer",
@@ -30,7 +32,9 @@ pub(crate) fn new() -> Resource {
                     ],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/elasticloadbalancing/latest/APIReference/API_DescribeLoadBalancers.html",
+                document: DocumentUrl(
+                    "elasticloadbalancing/latest/APIReference/API_DescribeLoadBalancers.html",
+                ),
             },
             get_api: None,
             resource_url: Some(Regional("ec2/v2/home?#LoadBalancers:search={dns_name}")),

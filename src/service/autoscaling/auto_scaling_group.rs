@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Autoscaling { command: Autoscaling::AutoScalingGroup }),
+            sub_command: Some(SubCommand::Autoscaling {
+                command: Autoscaling::AutoScalingGroup,
+            }),
             key_attribute: Some("auto_scaling_group_name"),
             service_name: "autoscaling",
             resource_type_name: "auto_scaling_group",
@@ -26,11 +28,13 @@ pub(crate) fn new() -> Resource {
                     token_name: "NextToken",
                     params: vec![
                         ("Action", "DescribeAutoScalingGroups"),
-                        ("Version", "2011-01-01")
+                        ("Version", "2011-01-01"),
                     ],
                     region: None,
-                    }),
-                document: "https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html",
+                }),
+                document: DocumentUrl(
+                    "autoscaling/ec2/APIReference/API_DescribeAutoScalingGroups.html",
+                ),
             },
             get_api: None,
             resource_url: Some(Regional("ec2autoscaling/home?#/details/{group_name}")),

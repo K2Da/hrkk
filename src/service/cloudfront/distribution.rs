@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Cloudfront { command: Cloudfront::Distribution }),
+            sub_command: Some(SubCommand::Cloudfront {
+                command: Cloudfront::Distribution,
+            }),
             key_attribute: Some("id"),
             service_name: "cloudfront",
             resource_type_name: "distribution",
@@ -18,7 +20,13 @@ pub(crate) fn new() -> Resource {
                     path: ("/2020-05-31/distribution", None),
                     method: Method::Get,
                     service_name: "cloudfront",
-                    iteration_tag: vec!["DistributionSummary", "SslProtocol", "Method", "Name", "Origin"],
+                    iteration_tag: vec![
+                        "DistributionSummary",
+                        "SslProtocol",
+                        "Method",
+                        "Name",
+                        "Origin",
+                    ],
                     limit: Some(Limit {
                         name: "maxitems",
                         max: 100,
@@ -27,10 +35,12 @@ pub(crate) fn new() -> Resource {
                     params: vec![],
                     region: Some(Region::UsEast1),
                 }),
-                document: "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_ListDistributions.html",
+                document: DocumentUrl("cloudfront/latest/APIReference/API_ListDistributions.html"),
             },
             get_api: None,
-            resource_url: Some(Global("cloudfront/home?#distribution-settings:{distribution_id}")),
+            resource_url: Some(Global(
+                "cloudfront/home?#distribution-settings:{distribution_id}",
+            )),
         },
     }
 }

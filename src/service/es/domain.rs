@@ -24,7 +24,7 @@ pub(crate) fn new() -> Resource {
                     token_name: None,
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames",
+                document: DocumentUrl("elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-listdomainnames"),
             },
             get_api: Some(GetApi {
                 param_path: vec!["domain_name"],

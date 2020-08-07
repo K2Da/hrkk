@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Elasticache { command: Elasticache::CacheCluster }),
+            sub_command: Some(SubCommand::Elasticache {
+                command: Elasticache::CacheCluster,
+            }),
             key_attribute: Some("cache_cluster_id"),
             service_name: "elasticache",
             resource_type_name: "cache_cluster",
@@ -26,11 +28,13 @@ pub(crate) fn new() -> Resource {
                     token_name: "Marker",
                     params: vec![
                         ("Action", "DescribeCacheClusters"),
-                        ("Version", "2015-02-02")
+                        ("Version", "2015-02-02"),
                     ],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonElastiCache/latest/APIReference/API_DescribeCacheClusters.html",
+                document: DocumentUrl(
+                    "AmazonElastiCache/latest/APIReference/API_DescribeCacheClusters.html",
+                ),
             },
             get_api: None,
             resource_url: None,

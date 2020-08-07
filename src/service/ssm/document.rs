@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Ssm { command: Ssm::Document }),
+            sub_command: Some(SubCommand::Ssm {
+                command: Ssm::Document,
+            }),
             key_attribute: Some("name"),
             service_name: "ssm",
             resource_type_name: "document",
@@ -20,11 +22,14 @@ pub(crate) fn new() -> Resource {
                     },
                     service_name: "ssm",
                     json: json!({}),
-                    limit: Some(Limit { name: "MaxResults", max: 50 }),
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 50,
+                    }),
                     token_name: Some("NextToken"),
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
+                document: DocumentUrl("systems-manager/latest/APIReference/API_ListDocuments.html"),
             },
             get_api: None,
             resource_url: Some(Regional("systems-manager/documents/{name}")),

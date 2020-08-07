@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Rds { command: RdsCommand::DbInstance }),
+            sub_command: Some(SubCommand::Rds {
+                command: RdsCommand::DbInstance,
+            }),
             key_attribute: Some("db_instance_identifier"),
             service_name: "rds",
             resource_type_name: "db_instance",
@@ -24,16 +26,15 @@ pub(crate) fn new() -> Resource {
                         max: 100,
                     }),
                     token_name: "NextToken",
-                    params: vec![
-                        ("Action", "DescribeDBInstances"),
-                        ("Version", "2014-10-31"),
-                    ],
+                    params: vec![("Action", "DescribeDBInstances"), ("Version", "2014-10-31")],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html",
+                document: DocumentUrl("AmazonRDS/latest/APIReference/API_DescribeDBInstances.html"),
             },
             get_api: None,
-            resource_url: Some(Regional("rds/home?#database:id={instance_id};is-cluster=false")),
+            resource_url: Some(Regional(
+                "rds/home?#database:id={instance_id};is-cluster=false",
+            )),
         },
     }
 }

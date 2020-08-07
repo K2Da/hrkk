@@ -29,8 +29,7 @@ pub(crate) fn new() -> Resource {
                     token_name: Some("NextToken"),
                     parameter_name: None,
                 }),
-                document:
-                    "https://docs.aws.amazon.com/acm/latest/APIReference/API_ListCertificates.html",
+                document: DocumentUrl("acm/latest/APIReference/API_ListCertificates.html"),
             },
             get_api: Some(GetApi {
                 param_path: vec!["certificate_arn"],

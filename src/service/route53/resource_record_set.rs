@@ -27,7 +27,9 @@ pub(crate) fn new() -> Resource {
                     params: vec![],
                     region: Some(Region::UsEast1),
                 }),
-                document: "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html",
+                document: DocumentUrl(
+                    "Route53/latest/APIReference/API_ListResourceRecordSets.html",
+                ),
             },
             get_api: None,
             resource_url: None,

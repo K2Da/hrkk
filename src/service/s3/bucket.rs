@@ -26,7 +26,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListBuckets.html",
+                document: DocumentUrl("AmazonS3/latest/API/API_ListBuckets.html"),
             },
             get_api: None,
             resource_url: Some(Global("s3/buckets/{bucket_name}/")),

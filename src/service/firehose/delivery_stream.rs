@@ -22,7 +22,7 @@ pub(crate) fn new() -> Resource {
                     token_name: Some("ExclusiveStartDeliveryStreamName"),
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/firehose/latest/APIReference/API_ListDeliveryStreams.html",
+                document: DocumentUrl("firehose/latest/APIReference/API_ListDeliveryStreams.html"),
             },
             get_api: Some(GetApi {
                 param_path: vec![],

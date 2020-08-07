@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Route53 { command: Route53::HostedZone }),
+            sub_command: Some(SubCommand::Route53 {
+                command: Route53::HostedZone,
+            }),
             key_attribute: Some("id"),
             service_name: "route53",
             resource_type_name: "hosted_zone",
@@ -27,7 +29,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![],
                     region: Some(Region::UsEast1),
                 }),
-                document: "https://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html",
+                document: DocumentUrl("Route53/latest/APIReference/API_ListHostedZones.html"),
             },
             get_api: None,
             resource_url: Some(Global("route53/home?#resource-record-sets:{zone_id}")),

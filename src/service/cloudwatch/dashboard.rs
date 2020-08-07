@@ -27,7 +27,7 @@ pub(crate) fn new() -> Resource {
                     ],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
+                document: DocumentUrl("AmazonCloudWatch/latest/APIReference/API_ListDashboards.html"),
             },
             get_api: Some(GetApi {
                 param_path: vec!["dashboard_name"],

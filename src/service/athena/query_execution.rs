@@ -22,7 +22,7 @@ pub(crate) fn new() -> Resource {
                     token_name: Some("NextToken"),
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_ListQueryExecutions.html",
+                document: DocumentUrl("athena/latest/APIReference/API_ListQueryExecutions.html"),
             },
             get_api: Some(GetApi {
                 param_path: vec![],

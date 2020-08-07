@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Cloudwatch { command: Cloudwatch::Metric }),
+            sub_command: Some(SubCommand::Cloudwatch {
+                command: Cloudwatch::Metric,
+            }),
             key_attribute: Some("metric_name"),
             service_name: "cloudwatch",
             resource_type_name: "metric",
@@ -21,13 +23,10 @@ pub(crate) fn new() -> Resource {
                     iteration_tag: vec!["member"],
                     limit: None,
                     token_name: "NextToken",
-                    params: vec![
-                        ("Action", "ListMetrics"),
-                        ("Version", "2010-08-01"),
-                    ],
+                    params: vec![("Action", "ListMetrics"), ("Version", "2010-08-01")],
                     region: None,
                 }),
-                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_ListMetrics.html",
+                document: DocumentUrl("AmazonCloudWatch/latest/APIReference/API_ListMetrics.html"),
             },
             get_api: None,
             resource_url: None,

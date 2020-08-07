@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Ec2 { command: Ec2::Subnet }),
+            sub_command: Some(SubCommand::Ec2 {
+                command: Ec2::Subnet,
+            }),
             key_attribute: Some("subnet_id"),
             service_name: "ec2",
             resource_type_name: "subnet",
@@ -24,8 +26,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![("Action", "DescribeSubnets"), ("Version", "2016-11-15")],
                     region: None,
                 }),
-                document:
-                    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html"
+                document: DocumentUrl("AWSEC2/latest/APIReference/API_DescribeSubnets.html"),
             },
             get_api: None,
             resource_url: Some(Regional("vpc/home?#subnets:search={subnet_id}")),

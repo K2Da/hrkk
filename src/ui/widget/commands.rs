@@ -105,7 +105,7 @@ impl Commands {
 
                 section = section.str("List API", &info.list_api.format.name());
 
-                section = section.str("docs", &info.list_api.document);
+                section = section.str("docs", &info.list_api.document.url());
 
                 if let Some(get) = &info.get_api {
                     section = section.str("Get API", &get.format.name());

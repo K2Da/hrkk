@@ -4,8 +4,8 @@ pub(crate) use crate::error::Result;
 pub(crate) use crate::opts::Opts;
 pub(crate) use crate::opts::*;
 pub(crate) use crate::service::{
-    merge_yamls, next_token, resource_by_name, tag_value, AwsResource, ExecuteTarget, GetApi,
-    GetFormat, GetJson, GetXml, Info, JsonListMethod, Limit, ListApi, ListFormat, ListJson,
+    merge_yamls, next_token, resource_by_name, tag_value, AwsResource, DocumentUrl, ExecuteTarget,
+    GetApi, GetFormat, GetJson, GetXml, Info, JsonListMethod, Limit, ListApi, ListFormat, ListJson,
     ListXml, Method, ResourceList, ResourceUrl::Global, ResourceUrl::Regional,
 };
 pub(crate) use crate::show::{byte, duration, raw, span, time, Section};

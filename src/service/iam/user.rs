@@ -27,7 +27,7 @@ pub(crate) fn new() -> Resource {
                     params: vec![("Action", "ListUsers"), ("Version", "2010-05-08")],
                     region: Some(Region::UsEast1),
                 }),
-                document: "https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListUsers.html",
+                document: DocumentUrl("IAM/latest/APIReference/API_ListUsers.html"),
             },
             get_api: None,
             resource_url: Some(Global("iam/home?#/users/{user_name}")),

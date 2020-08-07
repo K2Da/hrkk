@@ -22,7 +22,7 @@ pub(crate) fn new() -> Resource {
                     token_name: Some("ExclusiveStartStreamName"),
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_ListStreams.html",
+                document: DocumentUrl("kinesis/latest/APIReference/API_ListStreams.html"),
             },
             get_api: Some(GetApi {
                 param_path: vec![],

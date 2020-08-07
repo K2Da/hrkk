@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Ec2 { command: Ec2::SecurityGroup }),
+            sub_command: Some(SubCommand::Ec2 {
+                command: Ec2::SecurityGroup,
+            }),
             key_attribute: Some("group_id"),
             service_name: "ec2",
             resource_type_name: "security_group",
@@ -27,8 +29,7 @@ pub(crate) fn new() -> Resource {
                     ],
                     region: None,
                 }),
-                document:
-                    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html"
+                document: DocumentUrl("AWSEC2/latest/APIReference/API_DescribeSecurityGroups.html"),
             },
             get_api: None,
             resource_url: Some(Regional("vpc/home?#SecurityGroup:groupId={group_id}")),

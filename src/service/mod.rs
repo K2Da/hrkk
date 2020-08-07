@@ -95,10 +95,19 @@ pub(crate) enum ResourceUrl {
     Global(&'static str),
 }
 
+#[derive(Serialize, Clone, Debug)]
+pub(crate) struct DocumentUrl(&'static str);
+
+impl DocumentUrl {
+    pub(crate) fn url(&self) -> String {
+        format!("https://docs.aws.amazon.com/{}", self.0)
+    }
+}
+
 #[derive(Serialize, Clone)]
 pub(crate) struct ListApi {
     pub(crate) format: ListFormat,
-    pub(crate) document: &'static str,
+    pub(crate) document: DocumentUrl,
 }
 
 #[derive(Serialize, Clone)]
