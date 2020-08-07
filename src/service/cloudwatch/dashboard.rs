@@ -61,15 +61,15 @@ impl AwsResource for Resource {
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
         match get {
             Some(get) => vec![
-                show::raw(&list["dashboard_name"]),
-                show::byte(&list["size"]),
-                show::time(&list["last_modified"]),
-                show::raw(&get["get_dashboard_result"]["dashboard_body"]),
+                raw(&list["dashboard_name"]),
+                byte(&list["size"]),
+                time(&list["last_modified"]),
+                raw(&get["get_dashboard_result"]["dashboard_body"]),
             ],
             None => vec![
-                show::raw(&list["dashboard_name"]),
-                show::byte(&list["size"]),
-                show::time(&list["last_modified"]),
+                raw(&list["dashboard_name"]),
+                byte(&list["size"]),
+                time(&list["last_modified"]),
                 "".to_owned(),
             ],
         }
@@ -97,7 +97,7 @@ impl AwsResource for Resource {
         if let Some(yaml) = get {
             Some(vec![(
                 "dashboard_name",
-                show::raw(&yaml["list"]["dashboard_name"]),
+                raw(&yaml["list"]["dashboard_name"]),
             )])
         } else {
             None

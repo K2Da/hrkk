@@ -55,11 +55,11 @@ impl AwsResource for Resource {
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
         match get {
             Some(get) => vec![
-                show::raw(&get["query_execution"]["query_execution_id"]),
-                show::raw(&get["query_execution"]["status"]["state"]),
-                show::time(&get["query_execution"]["status"]["completion_date_time"]),
+                raw(&get["query_execution"]["query_execution_id"]),
+                raw(&get["query_execution"]["status"]["state"]),
+                time(&get["query_execution"]["status"]["completion_date_time"]),
             ],
-            None => vec![show::raw(&list), "".to_string()],
+            None => vec![raw(&list), "".to_string()],
         }
     }
 
@@ -98,7 +98,7 @@ impl AwsResource for Resource {
         if let Some(yaml) = get {
             Some(vec![(
                 "execution_id",
-                show::raw(&yaml["query_execution"]["query_execution_id"]),
+                raw(&yaml["query_execution"]["query_execution_id"]),
             )])
         } else {
             None

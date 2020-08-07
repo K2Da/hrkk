@@ -57,9 +57,9 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::time(&list["timestamp"]),
-            show::raw(&list["alarm_name"]),
-            show::raw(&list["history_summary"]),
+            time(&list["timestamp"]),
+            raw(&list["alarm_name"]),
+            raw(&list["history_summary"]),
         ]
     }
 
@@ -75,6 +75,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("alarm_name", show::raw(&list["alarm_name"]))])
+        Some(vec![("alarm_name", raw(&list["alarm_name"]))])
     }
 }

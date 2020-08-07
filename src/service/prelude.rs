@@ -8,8 +8,7 @@ pub(crate) use crate::service::{
     GetFormat, GetJson, GetXml, Info, JsonListMethod, Limit, ListApi, ListFormat, ListJson,
     ListXml, Method, ResourceList, ResourceUrl::Global, ResourceUrl::Regional,
 };
-pub(crate) use crate::show;
-pub(crate) use crate::show::Section;
+pub(crate) use crate::show::{byte, duration, raw, span, time, Section};
 pub(crate) use inflector::Inflector;
 pub(crate) use rusoto_core::Region;
 pub(crate) use rusoto_signature::SignedRequest;

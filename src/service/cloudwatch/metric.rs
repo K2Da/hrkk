@@ -48,10 +48,7 @@ impl AwsResource for Resource {
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![
-            show::raw(&list["namespace"]),
-            show::raw(&list["metric_name"]),
-        ]
+        vec![raw(&list["namespace"]), raw(&list["metric_name"])]
     }
 
     fn detail(&self, yaml: &Yaml, _get_yaml: &Option<Yaml>, _region: &str) -> Section {

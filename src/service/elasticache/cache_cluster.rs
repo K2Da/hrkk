@@ -54,10 +54,7 @@ impl AwsResource for Resource {
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![
-            show::raw(&list["engine"]),
-            show::raw(&list["cache_cluster_id"]),
-        ]
+        vec![raw(&list["engine"]), raw(&list["cache_cluster_id"])]
     }
 
     fn detail(&self, list: &Yaml, _get: &Option<Yaml>, _region: &str) -> Section {

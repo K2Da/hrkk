@@ -52,8 +52,8 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["db_instance_status"]),
-            show::raw(&list["db_instance_identifier"]),
+            raw(&list["db_instance_status"]),
+            raw(&list["db_instance_identifier"]),
         ]
     }
 
@@ -73,9 +73,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![(
-            "instance_id",
-            show::raw(&list["db_instance_identifier"]),
-        )])
+        Some(vec![("instance_id", raw(&list["db_instance_identifier"]))])
     }
 }

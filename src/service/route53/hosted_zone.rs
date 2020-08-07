@@ -48,7 +48,7 @@ impl AwsResource for Resource {
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![show::raw(&list["id"]), show::raw(&list["name"])]
+        vec![raw(&list["id"]), raw(&list["name"])]
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
@@ -71,6 +71,6 @@ impl AwsResource for Resource {
     }
 
     fn resource_name(&self, yaml: &Yaml) -> String {
-        show::raw(&yaml["id"]).replace("/hostedzone/", "")
+        raw(&yaml["id"]).replace("/hostedzone/", "")
     }
 }

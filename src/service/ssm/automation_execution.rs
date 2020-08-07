@@ -46,10 +46,10 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["automation_execution_status"]),
-            show::raw(&list["document_name"]),
-            show::duration(&list["execution_start_time"], &list["execution_end_time"]),
-            show::time(&list["execution_end_time"]),
+            raw(&list["automation_execution_status"]),
+            raw(&list["document_name"]),
+            duration(&list["execution_start_time"], &list["execution_end_time"]),
+            time(&list["execution_end_time"]),
         ]
     }
 
@@ -73,7 +73,7 @@ impl AwsResource for Resource {
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
         Some(vec![(
             "execution_id",
-            show::raw(&list["automation_execution_id"]),
+            raw(&list["automation_execution_id"]),
         )])
     }
 }

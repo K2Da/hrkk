@@ -70,7 +70,7 @@ impl AwsResource for Resource {
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![show::raw(&list["name"]), show::raw(&list["type"])]
+        vec![raw(&list["name"]), raw(&list["type"])]
     }
 
     fn detail(&self, list: &Yaml, _get: &Option<Yaml>, _region: &str) -> Section {

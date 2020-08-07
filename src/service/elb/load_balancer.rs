@@ -54,10 +54,7 @@ impl AwsResource for Resource {
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![
-            show::raw(&list["load_balancer_name"]),
-            show::raw(&list["type"]),
-        ]
+        vec![raw(&list["load_balancer_name"]), raw(&list["type"])]
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
@@ -72,6 +69,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("dns_name", show::raw(&list["dns_name"]))])
+        Some(vec![("dns_name", raw(&list["dns_name"]))])
     }
 }

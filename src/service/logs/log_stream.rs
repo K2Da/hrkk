@@ -68,11 +68,11 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::span(
+            span(
                 &list["first_event_timestamp"],
                 &list["last_event_timestamp"],
             ),
-            show::raw(&list["log_stream_name"]),
+            raw(&list["log_stream_name"]),
         ]
     }
 
@@ -90,7 +90,7 @@ impl AwsResource for Resource {
             .raw("upload_sequence_token")
             .section(
                 Section::new(list).string_name("path").string_attributes(
-                    show::raw(&list["log_stream_name"])
+                    raw(&list["log_stream_name"])
                         .split("/")
                         .enumerate()
                         .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
@@ -103,9 +103,9 @@ impl AwsResource for Resource {
         Some(vec![
             (
                 "group_name",
-                show::raw(&list["arn"]).split(":").collect::<Vec<&str>>()[6].to_owned(),
+                raw(&list["arn"]).split(":").collect::<Vec<&str>>()[6].to_owned(),
             ),
-            ("stream_name", show::raw(&list["log_stream_name"])),
+            ("stream_name", raw(&list["log_stream_name"])),
         ])
     }
 }

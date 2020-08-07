@@ -52,9 +52,9 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["launch_template_name"]),
-            show::raw(&list["latest_version_number"]),
-            show::raw(&list["default_version_number"]),
+            raw(&list["launch_template_name"]),
+            raw(&list["latest_version_number"]),
+            raw(&list["default_version_number"]),
         ]
     }
 
@@ -70,9 +70,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![(
-            "template_id",
-            show::raw(&list["launch_template_id"]),
-        )])
+        Some(vec![("template_id", raw(&list["launch_template_id"]))])
     }
 }

@@ -59,11 +59,11 @@ impl AwsResource for Resource {
             Some(get) => {
                 let root = &get["stream_description"];
                 vec![
-                    show::raw(&root["stream_name"]),
-                    show::time(&root["stream_creation_timestamp"]),
+                    raw(&root["stream_name"]),
+                    time(&root["stream_creation_timestamp"]),
                 ]
             }
-            None => vec![show::raw(&list), "".to_string()],
+            None => vec![raw(&list), "".to_string()],
         }
     }
 
@@ -89,7 +89,7 @@ impl AwsResource for Resource {
         if let Some(yaml) = get {
             Some(vec![(
                 "stream_name",
-                show::raw(&yaml["stream_description"]["stream_name"]),
+                raw(&yaml["stream_description"]["stream_name"]),
             )])
         } else {
             None

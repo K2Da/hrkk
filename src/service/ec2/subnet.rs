@@ -44,8 +44,8 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["subnet_id"]),
-            show::raw(&tag_value(&list["tag_set"], "Name")),
+            raw(&list["subnet_id"]),
+            raw(&tag_value(&list["tag_set"], "Name")),
         ]
     }
 
@@ -74,6 +74,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("subnet_id", show::raw(&list["subnet_id"]))])
+        Some(vec![("subnet_id", raw(&list["subnet_id"]))])
     }
 }

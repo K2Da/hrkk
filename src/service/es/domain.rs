@@ -54,10 +54,10 @@ impl AwsResource for Resource {
     fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String> {
         match get {
             Some(get) => vec![
-                show::raw(&get["domain_status"]["domain_name"]),
-                show::raw(&get["domain_status"]["elasticsearch_version"]),
+                raw(&get["domain_status"]["domain_name"]),
+                raw(&get["domain_status"]["elasticsearch_version"]),
             ],
-            None => vec![show::raw(&list["domain_name"]), "-".to_string()],
+            None => vec![raw(&list["domain_name"]), "-".to_string()],
         }
     }
 
@@ -86,6 +86,6 @@ impl AwsResource for Resource {
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("domain_name", show::raw(&list["domain_name"]))])
+        Some(vec![("domain_name", raw(&list["domain_name"]))])
     }
 }

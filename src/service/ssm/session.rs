@@ -79,9 +79,9 @@ impl AwsResource for Resource {
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&list["session_id"]),
-            show::raw(&list["target"]),
-            show::span(&list["start_date"], &list["end_date"]),
+            raw(&list["session_id"]),
+            raw(&list["target"]),
+            span(&list["start_date"], &list["end_date"]),
         ]
     }
 

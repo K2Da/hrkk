@@ -59,11 +59,11 @@ impl AwsResource for Resource {
             Some(get) => {
                 let root = &get["delivery_stream_description"];
                 vec![
-                    show::raw(&root["delivery_stream_name"]),
-                    show::time(&root["create_timestamp"]),
+                    raw(&root["delivery_stream_name"]),
+                    time(&root["create_timestamp"]),
                 ]
             }
-            None => vec![show::raw(&list), "".to_string()],
+            None => vec![raw(&list), "".to_string()],
         }
     }
 
@@ -88,7 +88,7 @@ impl AwsResource for Resource {
         if let Some(yaml) = get {
             Some(vec![(
                 "delivery_stream_name",
-                show::raw(&yaml["delivery_stream_description"]["delivery_stream_name"]),
+                raw(&yaml["delivery_stream_description"]["delivery_stream_name"]),
             )])
         } else {
             None
