@@ -79,10 +79,11 @@ impl AwsResource for Resource {
             .raw("mode")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
         Some(vec![(
             "execution_id",
             raw(&list["automation_execution_id"]),
+            true,
         )])
     }
 }

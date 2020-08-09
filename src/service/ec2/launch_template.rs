@@ -75,7 +75,11 @@ impl AwsResource for Resource {
             .raw("created_by")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("template_id", raw(&list["launch_template_id"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![(
+            "template_id",
+            raw(&list["launch_template_id"]),
+            true,
+        )])
     }
 }

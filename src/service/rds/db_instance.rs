@@ -73,7 +73,11 @@ impl AwsResource for Resource {
             .raw("preferred_maintenance_window")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("instance_id", raw(&list["db_instance_identifier"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![(
+            "instance_id",
+            raw(&list["db_instance_identifier"]),
+            true,
+        )])
     }
 }

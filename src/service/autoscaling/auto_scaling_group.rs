@@ -77,7 +77,11 @@ impl AwsResource for Resource {
             .time("created_time")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("group_name", raw(&list["auto_scaling_group_name"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![(
+            "group_name",
+            raw(&list["auto_scaling_group_name"]),
+            true,
+        )])
     }
 }

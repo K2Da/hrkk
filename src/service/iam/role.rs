@@ -8,11 +8,11 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Iam { command: Iam::User }),
-            key_attribute: Some("user_id"),
+            sub_command: Some(SubCommand::Iam { command: Iam::Role }),
+            key_attribute: Some("role_id"),
             service_name: "iam",
-            resource_type_name: "user",
-            header: vec!["id", "name"],
+            resource_type_name: "role",
+            header: vec!["id", "path", "name"],
             list_api: ListApi {
                 format: ListFormat::Xml(ListXml {
                     path: ("/", None),
@@ -24,13 +24,13 @@ pub(crate) fn new() -> Resource {
                         max: 1000,
                     }),
                     token_name: "Marker",
-                    params: vec![("Action", "ListUsers"), ("Version", "2010-05-08")],
+                    params: vec![("Action", "ListRoles"), ("Version", "2010-05-08")],
                     region: Some(Region::UsEast1),
                 }),
-                document: DocumentUrl("IAM/latest/APIReference/API_ListUsers.html"),
+                document: DocumentUrl("IAM/latest/APIReference/API_ListRoles.html"),
             },
             get_api: None,
-            resource_url: Some(Global("iam/home?#/users/{user_name}")),
+            resource_url: Some(Global("iam/home?#/roles/{role_name}")),
         },
     }
 }
@@ -42,27 +42,31 @@ impl AwsResource for Resource {
 
     fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         (
-            make_resource_list(self, &yaml["list_users_result"]["users"]),
+            make_resource_list(self, &yaml["list_roles_result"]["roles"]),
             None,
         )
     }
 
     fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
-        vec![raw(&list["user_id"]), raw(&list["user_name"])]
+        vec![
+            raw(&list["role_id"]),
+            raw(&list["path"]),
+            raw(&list["role_name"]),
+        ]
     }
 
     fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
         Section::new(list)
-            .yaml_name("user_name")
+            .yaml_name("role_name")
             .resource_url(self.console_url(list, get, region))
-            .raw("user_id")
+            .raw("role_id")
             .raw("arn")
             .raw("path")
-            .time("password_last_used")
+            .raw("assume_role_policy_document")
             .time("create_date")
     }
 
     fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
-        Some(vec![("user_name", raw(&list["user_name"]), true)])
+        Some(vec![("role_name", raw(&list["role_name"]), true)])
     }
 }

@@ -66,7 +66,7 @@ impl AwsResource for Resource {
             )
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("vpc_id", raw(&list["vpc_id"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("vpc_id", raw(&list["vpc_id"]), true)])
     }
 }

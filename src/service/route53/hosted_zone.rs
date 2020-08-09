@@ -68,8 +68,8 @@ impl AwsResource for Resource {
             )
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("zone_id", self.resource_name(list))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("zone_id", self.resource_name(list), true)])
     }
 
     fn resource_name(&self, yaml: &Yaml) -> String {

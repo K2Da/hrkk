@@ -67,7 +67,7 @@ impl AwsResource for Resource {
             .byte("stored_bytes")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("log_group_name", raw(&list["log_group_name"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("log_group_name", raw(&list["log_group_name"]), true)])
     }
 }

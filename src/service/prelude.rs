@@ -6,7 +6,7 @@ pub(crate) use crate::opts::*;
 pub(crate) use crate::service::{
     merge_yamls, next_token, resource_by_name, tag_value, AwsResource, DocumentUrl, ExecuteTarget,
     GetApi, GetFormat, GetJson, GetXml, Info, JsonListMethod, Limit, ListApi, ListFormat, ListJson,
-    ListXml, Method, ResourceList, ResourceUrl::Global, ResourceUrl::Regional,
+    ListXml, Method, ParamSet, ResourceList, ResourceUrl::Global, ResourceUrl::Regional,
 };
 pub(crate) use crate::show::{byte, duration, raw, span, time, Section};
 pub(crate) use inflector::Inflector;

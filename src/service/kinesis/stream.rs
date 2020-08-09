@@ -85,11 +85,12 @@ impl AwsResource for Resource {
         }
     }
 
-    fn url_params(&self, _list: &Yaml, get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+    fn url_params(&self, _list: &Yaml, get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
         if let Some(yaml) = get {
             Some(vec![(
                 "stream_name",
                 raw(&yaml["stream_description"]["stream_name"]),
+                true,
             )])
         } else {
             None

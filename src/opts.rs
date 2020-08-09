@@ -308,6 +308,8 @@ pub(crate) enum Iam {
     Role,
     #[structopt(name = "policy")]
     Policy,
+    #[structopt(name = "mfa-device")]
+    MfaDevice,
 }
 
 #[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]

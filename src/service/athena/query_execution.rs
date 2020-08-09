@@ -94,11 +94,16 @@ impl AwsResource for Resource {
         }
     }
 
-    fn url_params(&self, _list: &Yaml, get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+    fn url_params(
+        &self,
+        _: &Yaml,
+        get: &Option<Yaml>,
+    ) -> Option<Vec<(&'static str, String, bool)>> {
         if let Some(yaml) = get {
             Some(vec![(
                 "execution_id",
                 raw(&yaml["query_execution"]["query_execution_id"]),
+                true,
             )])
         } else {
             None

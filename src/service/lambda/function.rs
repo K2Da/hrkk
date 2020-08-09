@@ -62,7 +62,7 @@ impl AwsResource for Resource {
             .raw("role")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("function_name", raw(&list["function_name"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("function_name", raw(&list["function_name"]), true)])
     }
 }

@@ -72,7 +72,7 @@ impl AwsResource for Resource {
             .raw("price_class")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("distribution_id", raw(&list["id"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("distribution_id", raw(&list["id"]), true)])
     }
 }

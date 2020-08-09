@@ -53,6 +53,9 @@ pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
         Box::new(es::domain::new()),
         Box::new(firehose::delivery_stream::new()),
         Box::new(iam::group::new()),
+        Box::new(iam::mfa_device::new()),
+        Box::new(iam::policy::new()),
+        Box::new(iam::role::new()),
         Box::new(iam::user::new()),
         Box::new(kinesis::stream::new()),
         Box::new(lambda::function::new()),
@@ -247,6 +250,8 @@ impl Clone for Box<dyn AwsResource> {
     }
 }
 
+pub(crate) type ParamSet = (&'static str, String, bool);
+
 pub(crate) trait AwsResource: Send + Sync {
     fn info(&self) -> &Info;
 
@@ -281,15 +286,22 @@ pub(crate) trait AwsResource: Send + Sync {
                 }
                 ResourceUrl::Global(url) => format!("https://console.aws.amazon.com/{}", url),
             };
-            for (key, param) in self.url_params(list, get).unwrap_or(vec![]).iter() {
-                line = line.replace(&("{".to_string() + key + "}"), &url_encoded(param));
+            for (key, param, encode) in self.url_params(list, get).unwrap_or(vec![]).iter() {
+                line = line.replace(
+                    &("{".to_string() + key + "}"),
+                    &(if *encode {
+                        url_encoded(param)
+                    } else {
+                        param.to_string()
+                    }),
+                );
             }
             return line;
         }
         "-".to_string()
     }
 
-    fn url_params(&self, _list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+    fn url_params(&self, _list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
         panic!("no url for this resource")
     }
 

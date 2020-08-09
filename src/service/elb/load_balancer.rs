@@ -72,7 +72,7 @@ impl AwsResource for Resource {
             .raw("canonical_hosted_zone_id")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("dns_name", raw(&list["dns_name"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("dns_name", raw(&list["dns_name"]), true)])
     }
 }

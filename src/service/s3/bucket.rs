@@ -54,7 +54,7 @@ impl AwsResource for Resource {
             .time("creation_date")
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
-        Some(vec![("bucket_name", raw(&list["name"]))])
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("bucket_name", raw(&list["name"]), true)])
     }
 }

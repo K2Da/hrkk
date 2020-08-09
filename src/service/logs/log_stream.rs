@@ -99,13 +99,14 @@ impl AwsResource for Resource {
             )
     }
 
-    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<(&'static str, String)>> {
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
         Some(vec![
             (
                 "group_name",
                 raw(&list["arn"]).split(":").collect::<Vec<&str>>()[6].to_owned(),
+                true,
             ),
-            ("stream_name", raw(&list["log_stream_name"])),
+            ("stream_name", raw(&list["log_stream_name"]), true),
         ])
     }
 }
