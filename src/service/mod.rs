@@ -1,109 +1,323 @@
 use crate::error::Error::*;
 use crate::error::Result;
-use crate::info::{BarInfo, CacheInfo, FetchInfo, ResourceInfo};
 use crate::opts::{Opts, SubCommand};
-use rusoto_core::signature::SignedRequest;
-use rusoto_credential::ChainProvider;
-pub use serde::Serialize;
-use skim::prelude::*;
+use linked_hash_map::LinkedHashMap;
+use serde::Serialize;
+use serde_json::{Map, Value};
 use yaml_rust::Yaml;
 
-pub mod cloudwatch;
-pub mod ec2;
-pub mod file;
-pub mod json_helper;
-mod json_to_yaml;
-pub mod logs;
-mod prelude;
-pub mod rds;
-pub mod ssm;
-pub mod xml_helper;
-mod xml_to_yaml;
+pub(crate) mod acm;
+pub(crate) mod athena;
+pub(crate) mod autoscaling;
+pub(crate) mod cloudformation;
+pub(crate) mod cloudfront;
+pub(crate) mod cloudwatch;
+pub(crate) mod ec2;
+pub(crate) mod elasticache;
+pub(crate) mod elastictranscoder;
+pub(crate) mod elb;
+pub(crate) mod es;
+pub(crate) mod firehose;
+pub(crate) mod iam;
+pub(crate) mod kinesis;
+pub(crate) mod lambda;
+pub(crate) mod logs;
+pub(crate) mod prelude;
+pub(crate) mod rds;
+pub(crate) mod route53;
+pub(crate) mod s3;
+pub(crate) mod ssm;
 
-pub fn all_resources() -> Vec<Box<dyn AwsResource>> {
+pub(crate) type ResourceList = Vec<(Vec<String>, Yaml)>;
+
+pub(crate) fn all_resources() -> Vec<Box<dyn AwsResource>> {
     vec![
+        Box::new(acm::certificate::new()),
+        Box::new(athena::query_execution::new()),
+        Box::new(autoscaling::auto_scaling_group::new()),
+        Box::new(cloudformation::stack::new()),
+        Box::new(cloudfront::distribution::new()),
         Box::new(cloudwatch::alarm::new()),
         Box::new(cloudwatch::alarm_history::new()),
+        Box::new(cloudwatch::dashboard::new()),
+        Box::new(cloudwatch::metric::new()),
+        Box::new(ec2::image::new()),
         Box::new(ec2::instance::new()),
+        Box::new(ec2::launch_template::new()),
+        Box::new(ec2::security_group::new()),
+        Box::new(ec2::subnet::new()),
+        Box::new(ec2::vpc::new()),
+        Box::new(elasticache::cache_cluster::new()),
+        Box::new(elastictranscoder::pipeline::new()),
+        Box::new(elb::load_balancer::new()),
+        Box::new(es::domain::new()),
+        Box::new(firehose::delivery_stream::new()),
+        Box::new(iam::group::new()),
+        Box::new(iam::mfa_device::new()),
+        Box::new(iam::policy::new()),
+        Box::new(iam::role::new()),
+        Box::new(iam::user::new()),
+        Box::new(kinesis::stream::new()),
+        Box::new(lambda::function::new()),
         Box::new(logs::log_group::new()),
         Box::new(logs::log_stream::new()),
         Box::new(rds::db_instance::new()),
+        Box::new(route53::hosted_zone::new()),
+        Box::new(route53::resource_record_set::new()),
+        Box::new(s3::bucket::new()),
         Box::new(ssm::automation_execution::new()),
         Box::new(ssm::document::new()),
         Box::new(ssm::session::new()),
     ]
 }
 
+pub(crate) fn resource_by_name(name: &str) -> Box<dyn AwsResource> {
+    for r in all_resources() {
+        if r.name() == name {
+            return r;
+        }
+    }
+    panic!("no resource with name = {}", name)
+}
+
 #[derive(Serialize)]
-pub struct Info {
-    key_attribute: &'static str,
+pub(crate) struct Info {
+    sub_command: Option<SubCommand>,
+    key_attribute: Option<&'static str>,
     service_name: &'static str,
     resource_type_name: &'static str,
-    api_type: ApiType,
-    pub document_url: &'static str,
-    pub max_limit: i64,
+    pub(crate) header: Vec<&'static str>,
+    pub(crate) list_api: ListApi,
+    pub(crate) get_api: Option<GetApi>,
+    pub(crate) resource_url: Option<ResourceUrl>,
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub(crate) enum ResourceUrl {
+    Regional(&'static str),
+    Global(&'static str),
+}
+
+#[derive(Serialize, Clone, Debug)]
+pub(crate) struct DocumentUrl(&'static str);
+
+impl DocumentUrl {
+    pub(crate) fn url(&self) -> String {
+        format!("https://docs.aws.amazon.com/{}", self.0)
+    }
 }
 
 #[derive(Serialize, Clone)]
-pub enum ApiType {
-    Xml {
-        service_name: &'static str,
-        action: &'static str,
-        version: &'static str,
-        limit_name: &'static str,
-        iteration_tag: Vec<&'static str>,
-    },
-    Json {
-        service_name: &'static str,
-        target: &'static str,
-        json: serde_json::Value,
-        limit_name: &'static str,
-        token_name: &'static str,
-        parameter_name: Option<&'static str>,
-    },
+pub(crate) struct ListApi {
+    pub(crate) format: ListFormat,
+    pub(crate) document: DocumentUrl,
 }
 
-pub trait AwsResource: Send + Sync {
+#[derive(Serialize, Clone)]
+pub(crate) enum ListFormat {
+    Xml(ListXml),
+    Json(ListJson),
+}
+
+impl ListFormat {
+    pub(crate) fn name(&self) -> String {
+        match self {
+            ListFormat::Xml(api) => format!("{} {:?}", api.path.0, api.params),
+            ListFormat::Json(ListJson {
+                method: JsonListMethod::Post { target },
+                ..
+            }) => target.to_string(),
+            ListFormat::Json(ListJson {
+                method: JsonListMethod::Get { path },
+                ..
+            }) => path.to_string(),
+        }
+    }
+
+    pub(crate) fn parameter_name(&self) -> Option<&'static str> {
+        match self {
+            ListFormat::Xml(_) => None,
+            ListFormat::Json(api) => api.parameter_name,
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct Limit {
+    pub(crate) name: &'static str,
+    pub(crate) max: i64,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct ListXml {
+    pub(crate) path: (&'static str, Option<&'static str>),
+    pub(crate) method: Method,
+    pub(crate) service_name: &'static str,
+    pub(crate) iteration_tag: Vec<&'static str>,
+    pub(crate) limit: Option<Limit>,
+    pub(crate) token_name: &'static str,
+    pub(crate) params: Vec<(&'static str, &'static str)>,
+    pub(crate) region: Option<rusoto_core::Region>,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) enum Method {
+    Post,
+    Get,
+}
+
+impl Method {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            Method::Post => "POST",
+            Method::Get => "GET",
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct ListJson {
+    pub(crate) method: JsonListMethod,
+    pub(crate) service_name: &'static str,
+    pub(crate) json: serde_json::Value,
+    pub(crate) limit: Option<Limit>,
+    pub(crate) token_name: Option<&'static str>,
+    pub(crate) parameter_name: Option<&'static str>,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) enum JsonListMethod {
+    Post { target: &'static str },
+    Get { path: &'static str },
+}
+
+impl ListJson {
+    pub(crate) fn json_map(&self) -> Result<Map<String, Value>> {
+        if let Value::Object(map) = &self.json {
+            return Ok(map.clone());
+        } else {
+            Err(SettingError("request json is not a map.".to_string()))
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct GetApi {
+    pub(crate) param_path: Vec<&'static str>,
+    pub(crate) format: GetFormat,
+    pub(crate) document: DocumentUrl,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) enum GetFormat {
+    Xml(GetXml),
+    Json(GetJson),
+}
+
+impl GetFormat {
+    pub(crate) fn name(&self) -> &'static str {
+        match self {
+            GetFormat::Xml(api) => api.action,
+            GetFormat::Json(GetJson {
+                target: Some(target),
+                ..
+            }) => target,
+            _ => "-",
+        }
+    }
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct GetXml {
+    pub(crate) service_name: &'static str,
+    pub(crate) action: &'static str,
+    pub(crate) version: &'static str,
+    pub(crate) parameter_name: &'static str,
+}
+
+#[derive(Serialize, Clone)]
+pub(crate) struct GetJson {
+    pub(crate) method: Method,
+    pub(crate) path: (&'static str, Option<&'static str>),
+    pub(crate) service_name: &'static str,
+    pub(crate) target: Option<&'static str>,
+    pub(crate) parameter_name: Option<&'static str>,
+}
+
+impl Clone for Box<dyn AwsResource> {
+    fn clone(&self) -> Self {
+        resource_by_name(&self.name())
+    }
+}
+
+pub(crate) type ParamSet = (&'static str, String, bool);
+
+pub(crate) trait AwsResource: Send + Sync {
     fn info(&self) -> &Info;
 
-    fn matching_sub_command(&self) -> Option<SubCommand>;
-
-    fn take_command(&self, sub_command: &SubCommand, _opts: &Opts) -> Result<SkimTarget> {
-        match self.matching_sub_command() {
+    fn take_command(&self, sub_command: &SubCommand, _opts: &Opts) -> Result<ExecuteTarget> {
+        match &self.info().sub_command {
             Some(matching_command) => {
-                if &matching_command == sub_command {
-                    Ok(SkimTarget::ExecuteThis { parameter: None })
+                if matching_command == sub_command {
+                    Ok(ExecuteTarget::ExecuteThis { parameter: None })
                 } else {
-                    Ok(SkimTarget::None)
+                    Ok(ExecuteTarget::Null)
                 }
             }
             None => panic!("should be overridden."),
         }
     }
 
-    fn without_param(&self, _opts: &Opts) -> SkimTarget {
-        SkimTarget::ExecuteThis { parameter: None }
+    fn without_param(&self, _opts: &Opts) -> ExecuteTarget {
+        ExecuteTarget::ExecuteThis { parameter: None }
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>);
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>);
 
-    fn line(&self, yaml: &Yaml) -> Vec<String>;
+    fn line(&self, list: &Yaml, get: &Option<Yaml>) -> Vec<String>;
 
-    fn detail(&self, yaml: &Yaml) -> String;
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> crate::show::Section;
+
+    fn console_url(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> String {
+        if let Some(resource_url) = &self.info().resource_url {
+            let mut line = match resource_url {
+                ResourceUrl::Regional(url) => {
+                    format!("https://{}.console.aws.amazon.com/{}", region, url)
+                }
+                ResourceUrl::Global(url) => format!("https://console.aws.amazon.com/{}", url),
+            };
+            for (key, param, encode) in self.url_params(list, get).unwrap_or(vec![]).iter() {
+                line = line.replace(
+                    &("{".to_string() + key + "}"),
+                    &(if *encode {
+                        url_encoded(param)
+                    } else {
+                        param.to_string()
+                    }),
+                );
+            }
+            return line;
+        }
+        "-".to_string()
+    }
+
+    fn url_params(&self, _list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        panic!("no url for this resource")
+    }
 
     fn name(&self) -> String {
         format!("{}_{}", self.service_name(), self.resource_type_name())
     }
 
     fn equal(&self, yaml: &Yaml, key: &str) -> bool {
-        yaml[&self.key()[..]] == Yaml::String(key.to_string())
+        self.resource_name(yaml) == key.to_string()
     }
 
-    fn resource_name(&self, yaml: &Yaml) -> String {
-        match &yaml[&self.key()[..]] {
-            Yaml::String(resource_id) => resource_id.to_string(),
-            _ => "no name".to_string(),
-        }
+    fn resource_name(&self, list: &Yaml) -> String {
+        crate::show::raw(match self.info().key_attribute {
+            Some(key_attribute) => &list[key_attribute],
+            None => &list,
+        })
     }
 
     fn service_name(&self) -> String {
@@ -114,81 +328,78 @@ pub trait AwsResource: Send + Sync {
         self.info().resource_type_name.to_owned()
     }
 
+    fn resource_full_name(&self) -> String {
+        format!("{}:{}", self.service_name(), self.resource_type_name())
+    }
+
     fn command_name(&self) -> String {
         self.resource_type_name().replace("_", "-")
     }
 
-    fn key(&self) -> String {
-        self.info().key_attribute.to_owned()
+    fn list_api(&self) -> ListFormat {
+        self.info().list_api.format.clone()
     }
 
-    fn response_type(&self) -> ApiType {
-        self.info().api_type.clone()
+    fn get_api(&self) -> Option<GetFormat> {
+        if let Some(api) = &self.info().get_api {
+            return Some(api.format.clone());
+        }
+        None
+    }
+
+    fn has_get_api(&self) -> bool {
+        self.info().get_api.is_some()
+    }
+
+    fn max_limit(&self) -> String {
+        match &self.info().list_api.format {
+            ListFormat::Xml(ListXml {
+                limit: Some(limit), ..
+            }) => format!("{}: {}", limit.name, limit.max),
+            ListFormat::Json(ListJson {
+                limit: Some(limit), ..
+            }) => format!("{}: {}", limit.name, limit.max),
+            _ => "-".to_owned(),
+        }
+    }
+
+    fn has_resource_url(&self) -> bool {
+        self.info().resource_url.is_some()
     }
 }
 
-pub enum SkimTarget {
+pub(crate) enum ExecuteTarget {
     ExecuteThis {
         parameter: Option<String>,
     },
     ParameterFromResource {
-        resource_name: String,
+        param_resource: Box<dyn AwsResource>,
     },
     ParameterFromList {
-        list: (String, Vec<(String, String)>),
+        option_name: String,
+        option_list: Vec<String>,
     },
-    None,
+    Null,
 }
 
-pub async fn execute_command(sub_command: &SubCommand, opts: &Opts) -> Result<()> {
+pub(crate) async fn execute_command(sub_command: &SubCommand, opts: Opts) -> Result<()> {
+    use ExecuteTarget::*;
     for resource in all_resources() {
-        match resource.take_command(sub_command, opts) {
-            Ok(SkimTarget::ExecuteThis { parameter }) => {
-                execute_with_parameter(&*resource, &parameter, &opts).await?;
+        match resource.take_command(sub_command, &opts.clone()) {
+            Ok(ExecuteThis { parameter }) => {
+                crate::ui::tui(opts.clone(), parameter, Some(resource)).await?;
             }
-            Ok(SkimTarget::ParameterFromResource { resource_name }) => {
-                let param = parameter_from_resource(&resource_name, opts).await?;
-                execute_with_parameter(&*resource, &param, opts).await?;
+            Ok(ParameterFromResource { .. }) | Ok(ParameterFromList { .. }) => {
+                crate::ui::tui(opts.clone(), None, Some(resource)).await?;
             }
-            Ok(SkimTarget::ParameterFromList { list }) => {
-                let param = parameter_from_list(&list).await?;
-                execute_with_parameter(&*resource, &param, opts).await?;
-            }
-            Ok(SkimTarget::None) => (),
+            Ok(ExecuteTarget::Null) => (),
             Err(e) => return Err(e),
         }
     }
     Ok(())
 }
 
-pub async fn parameter_from_resource(
-    parameter_resource_name: &str,
-    opts: &Opts,
-) -> Result<Option<String>> {
-    for parameter_resource in all_resources() {
-        if parameter_resource.name() == parameter_resource_name {
-            let (_, selected_items) =
-                resource_selector(parameter_resource.as_ref(), &None, opts).await?;
-            for item in selected_items {
-                return Ok(Some(item.output().to_string()));
-            }
-        }
-    }
-
-    Ok(None)
-}
-
-pub async fn parameter_from_list(
-    selection: &(String, Vec<(String, String)>),
-) -> Result<Option<String>> {
-    let selected_items = list_selector(selection).await?;
-    for item in selected_items {
-        return Ok(Some(item.output().to_string()));
-    }
-
-    Ok(None)
-}
-pub fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
+pub(crate) fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     if let Yaml::Array(array) = tags {
         for tag in array {
             if Yaml::String(name.to_string()) == tag["key"] {
@@ -199,198 +410,25 @@ pub fn tag_value<'a>(tags: &'a Yaml, name: &str) -> &'a Yaml {
     &Yaml::BadValue
 }
 
-pub fn next_token(yaml: &Yaml) -> Option<String> {
-    match &yaml["next_token"] {
-        Yaml::String(token) => Some(token.to_owned()),
-        _ => None,
-    }
-}
-
-fn print_selected_items(opts: &Opts, selected_items: &Vec<Arc<dyn SkimItem>>) {
-    for (i, item) in selected_items.iter().enumerate() {
-        if 0 == i {
-            print!("{}", item.output());
-        } else {
-            print!("{}{}", opts.delimiter(), item.output());
+pub(crate) fn next_token(yaml: &Yaml, token_name: Option<&'static str>) -> Option<String> {
+    if let Some(token_name) = token_name {
+        if let Yaml::String(token) = &yaml[token_name] {
+            return Some(token.to_owned());
         }
     }
+    None
 }
 
-pub async fn execute(resource: &dyn AwsResource, opts: &Opts) -> Result<()> {
-    match resource.without_param(opts) {
-        SkimTarget::ExecuteThis { parameter } => {
-            execute_with_parameter(&*resource, &parameter, &opts).await?
-        }
-        SkimTarget::ParameterFromResource { resource_name } => {
-            if let Some(param) = parameter_from_resource(&resource_name, opts).await? {
-                execute_with_parameter(&*resource, &Some(param), opts).await?;
-            }
-        }
-        SkimTarget::ParameterFromList { list } => {
-            let param = parameter_from_list(&list).await?;
-            execute_with_parameter(&*resource, &param, opts).await?;
-        }
-        SkimTarget::None => (),
-    }
-    Ok(())
+pub(crate) fn merge_yamls(yaml: &Yaml, get_yaml: &Yaml) -> Yaml {
+    let mut merged = LinkedHashMap::new();
+    merged.insert(Yaml::String("list".to_owned()), yaml.clone());
+    merged.insert(Yaml::String("get".to_owned()), get_yaml.clone());
+    Yaml::Hash(merged)
 }
 
-async fn execute_with_parameter(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<()> {
-    let (yaml_list, selected_items) = resource_selector(resource, parameter, opts).await?;
-
-    print_selected_items(opts, &selected_items);
-
-    if opts.export {
-        export_selected_items(resource, &yaml_list, &selected_items)?;
-    }
-    Ok(())
-}
-
-pub async fn resource_selector(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<(Vec<Yaml>, Vec<Arc<dyn SkimItem>>)> {
-    let mut info = vec![BarInfo::Resource(ResourceInfo {
-        service_name: resource.service_name().to_owned(),
-        command_name: resource.command_name().to_owned(),
-    })];
-
-    if !opts.cache {
-        info.push(BarInfo::Fetch(fetch_loop(resource, parameter, opts).await?));
-    } else {
-        info.push(BarInfo::Cache(CacheInfo {
-            opt_str: opts.colored_string(),
-        }));
-    }
-
-    let yaml_list = read_yaml(resource);
-    let selected_items = crate::skimmer::resources::skim(resource, &yaml_list, &info)?;
-
-    Ok((yaml_list, selected_items))
-}
-
-pub async fn list_selector(
-    list: &(String, Vec<(String, String)>),
-) -> Result<Vec<Arc<dyn SkimItem>>> {
-    Ok(crate::skimmer::list::skim(list)?)
-}
-
-async fn fetch_loop(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-) -> Result<FetchInfo> {
-    let mut info: FetchInfo = FetchInfo::new(opts)?;
-
-    let mut result = vec![];
-    let mut next_token: Option<String> = None;
-    for i in 0..opts.request_count() {
-        info.request_count = i + 1;
-        let (mut list, token) = fetch(resource, parameter, opts, next_token.clone()).await?;
-
-        result.append(&mut list);
-        next_token = token;
-        if next_token.is_none() {
-            info.fetch_all = true;
-            break;
-        }
-    }
-    info.resource_count = result.len();
-    file::store_yaml_list(&Yaml::Array(result), resource)?;
-    Ok(info)
-}
-
-async fn fetch(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-    next_token: Option<String>,
-) -> Result<(Vec<Yaml>, Option<String>)> {
-    let request = request(resource, parameter, opts, next_token)?;
-
-    let mut response =
-        rusoto_core::Client::new_with(ChainProvider::default(), rusoto_core::HttpClient::new()?)
-            .sign_and_dispatch(request)
-            .await
-            .map_err(|e| RusotoError(format!("{:?}", e)))?;
-
-    let response = response
-        .buffer()
-        .await
-        .map_err(|e| RusotoError(format!("{}", e)))?;
-
-    if !response.status.is_success() {
-        return Err(RusotoError(
-            String::from_utf8(response.body.as_ref().to_vec()).unwrap_or("".to_string()),
-        ));
-    }
-
-    if !response.body.is_empty() {
-        if opts.debug {
-            file::store_response(response.body.as_ref())?;
-        }
-        let yaml = match resource.response_type() {
-            ApiType::Xml { iteration_tag, .. } => {
-                xml_to_yaml::convert(response.body.as_ref(), &iteration_tag)?
-            }
-            ApiType::Json { .. } => json_to_yaml::convert(response.body.as_ref())?,
-        };
-        Ok(resource.make_vec(&yaml))
-    } else {
-        Err(RusotoError("response body is empty.".to_string()))
-    }
-}
-
-fn export_selected_items(
-    resource: &dyn AwsResource,
-    yaml_list: &Vec<Yaml>,
-    selected_items: &Vec<Arc<dyn SkimItem>>,
-) -> Result<()> {
-    for (i, item) in selected_items.iter().enumerate() {
-        for yaml in yaml_list {
-            let item_name = &item.output().to_string();
-            if resource.equal(yaml, item_name) {
-                file::store_yaml(
-                    yaml,
-                    &format!(
-                        "{}-{}-{}",
-                        resource.command_name(),
-                        resource.resource_type_name(),
-                        i + 1
-                    ),
-                )?;
-            }
-        }
-    }
-    Ok(())
-}
-
-fn read_yaml(resource: &dyn AwsResource) -> Vec<Yaml> {
-    let mut yaml_list: Vec<Yaml> = vec![];
-    match file::restore_yaml(resource) {
-        Some(arr) => {
-            for yaml in &arr {
-                yaml_list.push(yaml.clone());
-            }
-        }
-        None => (),
-    }
-    yaml_list
-}
-
-fn request(
-    resource: &dyn AwsResource,
-    parameter: &Option<String>,
-    opts: &Opts,
-    next_token: Option<String>,
-) -> Result<SignedRequest> {
-    match &resource.info().api_type {
-        ApiType::Xml { .. } => xml_helper::request(opts, next_token, resource),
-        ApiType::Json { .. } => json_helper::request(opts, next_token, parameter, resource),
+fn url_encoded(str: &str) -> String {
+    match serde_urlencoded::to_string(&[("", str)]) {
+        Ok(str) => str[1..].to_string(),
+        Err(err) => format!("{:?}", err),
     }
 }

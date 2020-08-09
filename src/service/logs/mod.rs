@@ -1,2 +1,2 @@
-pub mod log_group;
-pub mod log_stream;
+pub(crate) mod log_group;
+pub(crate) mod log_stream;

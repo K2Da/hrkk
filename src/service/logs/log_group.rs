@@ -1,28 +1,42 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "log_group_name",
+            sub_command: Some(SubCommand::Logs {
+                command: Logs::LogGroup,
+            }),
+            key_attribute: Some("log_group_name"),
             service_name: "logs",
             resource_type_name: "log_group",
-            api_type: ApiType::Json {
-                service_name: "logs",
-                target: "Logs_20140328.DescribeLogGroups",
-                json: json!({}),
-                limit_name: "limit",
-                token_name: "nextToken",
-                parameter_name: None,
+            header: vec!["name"],
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "Logs_20140328.DescribeLogGroups",
+                    },
+                    service_name: "logs",
+                    json: json!({}),
+                    limit: Some(Limit {
+                        name: "limit",
+                        max: 50,
+                    }),
+                    token_name: Some("nextToken"),
+                    parameter_name: None,
+                }),
+                document: DocumentUrl(
+                    "AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html",
+                ),
             },
-
-            document_url:
-            "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogGroups.html",
-            max_limit: 50,
+            get_api: None,
+            resource_url: Some(Regional(
+                "cloudwatch/home?#logsV2:log-groups/log-group/{log_group_name}",
+            )),
         },
     }
 }
@@ -32,27 +46,28 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Logs {
-            command: LogsCommand::LogGroup,
-        })
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["log_groups"]),
+            next_token(&yaml, Some("next_token")),
+        )
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "log_groups")
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
+        vec![raw(&list["log_group_name"])]
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
-        vec![show::raw(&item["log_group_name"])]
-    }
-
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(list)
             .yaml_name("log_group_name")
-            .raw("arn", "arn")
-            .time("creation time", "creation_time")
-            .raw("metric filter count", "metric_filter_count")
-            .byte("stored bytes", "stored_bytes")
-            .print_all()
+            .resource_url(self.console_url(list, get, region))
+            .raw("arn")
+            .time("creation_time")
+            .raw("metric_filter_count")
+            .byte("stored_bytes")
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("log_group_name", raw(&list["log_group_name"]), true)])
     }
 }

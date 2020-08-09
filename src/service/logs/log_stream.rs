@@ -1,28 +1,33 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "log_stream_name",
+            sub_command: None,
+            key_attribute: Some("log_stream_name"),
             service_name: "logs",
             resource_type_name: "log_stream",
-            api_type: ApiType::Json {
-                service_name: "logs",
-                target: "Logs_20140328.DescribeLogStreams",
-                json: json!({ "descending": Some(true), "orderBy": Some("LastEventTime".to_owned()) }),
-                limit_name: "limit",
-                token_name: "nextToken",
-                parameter_name: Some("logGroupName"),
+            header: vec!["time", "name"],
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "Logs_20140328.DescribeLogStreams",
+                    },
+                    service_name: "logs",
+                    json: json!({ "descending": Some(true), "orderBy": Some("LastEventTime".to_owned()) }),
+                    limit: Some(Limit { name: "limit", max: 50 }),
+                    token_name: Some("nextToken"),
+                    parameter_name: Some("logGroupName"),
+                }),
+                document: DocumentUrl("AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html"),
             },
-
-            document_url:
-            "https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DescribeLogStreams.html",
-            max_limit: 50,
+            get_api: None,
+            resource_url: Some(Regional("cloudwatch/home?#logsV2:log-groups/log-group/{group_name}/log-events/{stream_name}")),
         },
     }
 }
@@ -32,72 +37,76 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        None
-    }
-
-    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<SkimTarget> {
+    fn take_command(&self, sub_command: &SubCommand, opts: &Opts) -> Result<ExecuteTarget> {
         if let SubCommand::Logs {
-            command: LogsCommand::LogStream { log_group_name },
+            command: Logs::LogStream { log_group_name },
         } = sub_command
         {
             match log_group_name {
-                Some(text) => Ok(SkimTarget::ExecuteThis {
+                Some(text) => Ok(ExecuteTarget::ExecuteThis {
                     parameter: Some(text.clone()),
                 }),
                 None => Ok(self.without_param(opts)),
             }
         } else {
-            Ok(SkimTarget::None)
+            Ok(ExecuteTarget::Null)
         }
     }
 
-    fn without_param(&self, opts: &Opts) -> SkimTarget {
-        if opts.cache {
-            SkimTarget::ExecuteThis { parameter: None }
-        } else {
-            SkimTarget::ParameterFromResource {
-                resource_name: "logs_log_group".to_string(),
-            }
+    fn without_param(&self, _opts: &Opts) -> ExecuteTarget {
+        ExecuteTarget::ParameterFromResource {
+            param_resource: resource_by_name("logs_log_group"),
         }
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "log_streams")
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["log_streams"]),
+            next_token(&yaml, Some("next_token")),
+        )
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::span(
-                &item["first_event_timestamp"],
-                &item["last_event_timestamp"],
+            span(
+                &list["first_event_timestamp"],
+                &list["last_event_timestamp"],
             ),
-            show::raw(&item["log_stream_name"]),
+            raw(&list["log_stream_name"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(list)
             .yaml_name("log_stream_name")
-            .raw("arn", "arn")
-            .raw("creation time", "creation_time")
+            .resource_url(self.console_url(list, get, region))
+            .raw("arn")
+            .time("creation_time")
             .span(
                 "event between",
                 ("first_event_timestamp", "last_event_timestamp"),
             )
-            .time("last ingestion", "last_ingestion_time")
-            .raw("upload sequence token", "upload_sequence_token")
+            .time("last_ingestion_time")
+            .raw("upload_sequence_token")
             .section(
-                show::Section::new(&yaml)
-                    .string_name("path")
-                    .string_attributes(
-                        show::raw(&yaml["log_stream_name"])
-                            .split("/")
-                            .enumerate()
-                            .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
-                            .collect(),
-                    ),
+                Section::new(list).string_name("path").string_attributes(
+                    raw(&list["log_stream_name"])
+                        .split("/")
+                        .enumerate()
+                        .map(|(i, o)| (format!("{}", i + 1), o.to_owned()))
+                        .collect(),
+                ),
             )
-            .print_all()
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![
+            (
+                "group_name",
+                raw(&list["arn"]).split(":").collect::<Vec<&str>>()[6].to_owned(),
+                true,
+            ),
+            ("stream_name", raw(&list["log_stream_name"]), true),
+        ])
     }
 }

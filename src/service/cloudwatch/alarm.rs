@@ -1,26 +1,40 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "alarm_arn",
+            sub_command: Some(SubCommand::Cloudwatch {
+                command: Cloudwatch::Alarm,
+            }),
+            key_attribute: Some("alarm_arn"),
             service_name: "cloudwatch",
             resource_type_name: "alarm",
-            api_type: ApiType::Xml {
-                service_name: "monitoring",
-                action: "DescribeAlarms",
-                version: "2010-08-01",
-                limit_name: "MaxRecords",
-                iteration_tag: vec!["member"],
+            header: vec!["state", "name"],
+            list_api: ListApi {
+                format: ListFormat::Xml(ListXml {
+                    path: ("/", None),
+                    method: Method::Post,
+                    service_name: "monitoring",
+                    iteration_tag: vec!["member"],
+                    limit: Some(Limit {
+                        name: "MaxRecords",
+                        max: 100,
+                    }),
+                    token_name: "NextToken",
+                    params: vec![("Action", "DescribeAlarms"), ("Version", "2010-08-01")],
+                    region: None,
+                }),
+                document: DocumentUrl(
+                    "AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
+                ),
             },
-            document_url:
-                "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html",
-            max_limit: 100,
+            get_api: None,
+            resource_url: Some(Regional("cloudwatch/home?#alarmsV2:alarm/{alarm_name}")),
         },
     }
 }
@@ -30,13 +44,7 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Cloudwatch {
-            command: CloudwatchCommand::Alarm,
-        })
-    }
-
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
         let mut arr = vec![];
         let yaml = &yaml["describe_alarms_result"];
 
@@ -48,29 +56,34 @@ impl AwsResource for Resource {
             arr.append(&mut groups.clone());
         }
 
-        (arr, next_token(&yaml))
+        let vec = arr
+            .iter()
+            .map(|y| (self.line(y, &None), y.clone()))
+            .collect();
+        (vec, next_token(&yaml, Some("next_token")))
     }
 
-    fn line(&self, item: &Yaml) -> Vec<String> {
-        vec![
-            show::raw(&item["state_value"]),
-            show::raw(&item["alarm_name"]),
-        ]
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
+        vec![raw(&list["state_value"]), raw(&list["alarm_name"])]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(list)
             .yaml_name("alarm_name")
-            .raw("namespace", "namespace")
-            .raw("description", "alarm_description")
+            .resource_url(self.console_url(list, get, region))
+            .raw("namespace")
+            .raw("alarm_description")
             .section(
-                show::Section::new(&yaml)
+                Section::new(list)
                     .string_name("state")
-                    .raw("value", "state_value")
-                    .raw("reason", "state_reason")
-                    .raw("reason data", "state_reason_data")
-                    .raw("updated", "state_updated_timestamp"),
+                    .raw_n("value", &["state_value"])
+                    .raw_n("reason", &["state_reason"])
+                    .raw_n("reason data", &["state_reason_data"])
+                    .raw_n("updated", &["state_updated_timestamp"]),
             )
-            .print_all()
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("alarm_name", raw(&list["alarm_name"]), true)])
     }
 }

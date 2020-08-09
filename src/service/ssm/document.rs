@@ -1,26 +1,38 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "name",
+            sub_command: Some(SubCommand::Ssm {
+                command: Ssm::Document,
+            }),
+            key_attribute: Some("name"),
             service_name: "ssm",
             resource_type_name: "document",
-            api_type: ApiType::Json {
-                service_name: "ssm",
-                target: "AmazonSSM.ListDocuments",
-                json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
-                parameter_name: None,
+            header: vec!["type", "name", "owner"],
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "AmazonSSM.ListDocuments",
+                    },
+                    service_name: "ssm",
+                    json: json!({}),
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 50,
+                    }),
+                    token_name: Some("NextToken"),
+                    parameter_name: None,
+                }),
+                document: DocumentUrl("systems-manager/latest/APIReference/API_ListDocuments.html"),
             },
-            document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_ListDocuments.html",
-            max_limit: 50,
+            get_api: None,
+            resource_url: Some(Regional("systems-manager/documents/{name}")),
         },
     }
 }
@@ -30,37 +42,38 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Ssm {
-            command: SsmCommand::Document,
-        })
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["document_identifiers"]),
+            next_token(&yaml, Some("next_token")),
+        )
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "document_identifiers")
-    }
-
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&item["document_type"]),
-            show::raw(&item["name"]),
-            show::raw(&item["owner"]),
+            raw(&list["document_type"]),
+            raw(&list["name"]),
+            raw(&list["owner"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(list)
             .yaml_name("name")
-            .raw("format", "document_format")
-            .raw("type", "document_type")
-            .raw("owner", "owner")
-            .raw("schema version", "schema_version")
-            .raw("target type", "target_type")
+            .resource_url(self.console_url(list, get, region))
+            .raw("document_format")
+            .raw("document_type")
+            .raw("owner")
+            .raw("schema_version")
+            .raw("target_type")
             .section(
-                show::Section::new(&yaml)
+                Section::new(list)
                     .string_name("platform types")
                     .raw_array("platform_types"),
             )
-            .print_all()
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![("name", raw(&list["name"]), true)])
     }
 }

@@ -1,13 +1,17 @@
-pub use crate::error::Error::*;
-pub use crate::error::Result;
-pub use crate::opts::Opts;
-pub use crate::opts::*;
-pub use crate::service::{
-    json_helper, next_token, tag_value, xml_helper, ApiType, AwsResource, Info, SkimTarget,
+pub(crate) use crate::api::list::make_resource_list;
+pub(crate) use crate::error::Error::*;
+pub(crate) use crate::error::Result;
+pub(crate) use crate::opts::Opts;
+pub(crate) use crate::opts::*;
+pub(crate) use crate::service::{
+    merge_yamls, next_token, resource_by_name, tag_value, AwsResource, DocumentUrl, ExecuteTarget,
+    GetApi, GetFormat, GetJson, GetXml, Info, JsonListMethod, Limit, ListApi, ListFormat, ListJson,
+    ListXml, Method, ParamSet, ResourceList, ResourceUrl::Global, ResourceUrl::Regional,
 };
-pub use crate::show;
-pub use inflector::Inflector;
-pub use rusoto_signature::SignedRequest;
-pub use serde::Serialize;
-pub use serde_json::json;
-pub use yaml_rust::Yaml;
+pub(crate) use crate::show::{byte, duration, raw, span, time, Section};
+pub(crate) use inflector::Inflector;
+pub(crate) use rusoto_core::Region;
+pub(crate) use rusoto_signature::SignedRequest;
+pub(crate) use serde::Serialize;
+pub(crate) use serde_json::json;
+pub(crate) use yaml_rust::Yaml;

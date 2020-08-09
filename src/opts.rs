@@ -1,62 +1,53 @@
-use crate::color::ColoredString;
 use crate::error::Error::*;
 use crate::error::Result;
-use ansi_term::Color;
 use rusoto_core::Region;
+use serde::Serialize;
 use std::str::FromStr;
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, Clone, Serialize)]
 #[structopt(name = "hrkk")]
-pub struct Opts {
-    /// Max results of aws api request. Default is max size for each api type.
-    #[structopt(short = "l", long = "limit")]
-    pub limit: Option<i64>,
+pub(crate) struct Opts {
+    /// Initial aws request count for list- or describe- api. Hit "M" to fetch more.
+    #[structopt(short = "l", long = "list-request")]
+    pub(crate) list_request_count: Option<u8>,
 
-    /// Max aws request count.
-    #[structopt(short = "r", long = "request-count")]
-    pub request_count: Option<u8>,
-
-    /// Use cached api response. With this flag, "limit" and "request-count" parameters are ignored.
-    #[structopt(short = "c", long = "cache")]
-    pub cache: bool,
+    /// Initial aws request count for get- api. Hit "G" to get more.
+    #[structopt(short = "g", long = "get-request")]
+    pub(crate) get_request_count: Option<u8>,
 
     /// Store aws api response as "response_body.txt" in the cache directory.
     #[structopt(short = "b", long = "debug")]
-    pub debug: bool,
+    pub(crate) debug: bool,
 
-    /// Export selected items as yaml in the current directory.
-    #[structopt(short = "e", long = "export")]
-    pub export: bool,
+    /// Viewer window shows resources in YAML format.
+    #[structopt(short = "y", long = "yaml")]
+    pub(crate) yaml: bool,
 
     /// Profile name for the aws api request.
     #[structopt(short = "p", long = "profile")]
-    pub profile: Option<String>,
+    pub(crate) profile: Option<String>,
 
     /// Aws region for the aws api request.
-    #[structopt(short = "g", long = "region")]
-    pub region: Option<String>,
+    #[structopt(short = "r", long = "region")]
+    pub(crate) region: Option<String>,
 
     /// Delimiter for the output text. default is ","
     #[structopt(short = "d", long = "delimiter")]
-    pub delimiter: Option<String>,
+    pub(crate) delimiter: Option<String>,
+
+    /// Output aws console url for the selected resources
+    #[structopt(short = "u", long = "console-url")]
+    pub(crate) console_url: bool,
 
     /// Sub command.
     #[structopt(subcommand)]
-    pub sub_command: Option<SubCommand>,
+    pub(crate) sub_command: Option<SubCommand>,
 }
 
 impl Opts {
-    pub fn validate(&self) -> Result<()> {
-        if let Some(limit) = self.limit {
-            if limit < 5 || 1000 < limit {
-                return Err(ArgumentError(
-                    "limit must be between 1 and 1000".to_string(),
-                ));
-            }
-        }
-
-        if let Some(count) = self.request_count {
+    pub(crate) fn validate(&self) -> Result<()> {
+        if let Some(count) = self.list_request_count {
             if count == 0 || 10 < count {
                 return Err(ArgumentError(
                     "request-count must be between 1 and 10".to_string(),
@@ -67,105 +58,268 @@ impl Opts {
         Ok(())
     }
 
-    pub fn request_count(&self) -> usize {
-        match self.request_count {
+    pub(crate) fn list_request_count(&self) -> usize {
+        match self.list_request_count {
             Some(count) => count as usize,
             None => 1 as usize,
         }
     }
 
-    pub fn delimiter(&self) -> String {
+    pub(crate) fn get_request_count(&self) -> usize {
+        match self.get_request_count {
+            Some(count) => count as usize,
+            None => 10 as usize,
+        }
+    }
+
+    pub(crate) fn delimiter(&self) -> String {
         match &self.delimiter {
             Some(delimiter) => delimiter.to_string(),
             None => ",".to_string(),
         }
     }
 
-    pub fn set_profile(&self) {
+    pub(crate) fn set_profile(&self) {
         if let Some(profile) = &self.profile {
             std::env::set_var("AWS_PROFILE", profile)
         }
     }
 
-    pub fn region(&self) -> Result<Region> {
+    pub(crate) fn region(&self) -> Result<Region> {
         Ok(match &self.region {
             Some(region) => Region::from_str(region)?,
             None => Region::default(),
         })
     }
 
-    pub fn colored_string(&self) -> ColoredString {
-        let mut sb = ColoredString::empty();
-
-        sb.push_str(if self.cache {
-            ColoredString::new(" Cache ", None, Some(Color::Yellow))
+    pub(crate) fn region_name(&self) -> String {
+        if let Ok(region) = self.region() {
+            region.name().to_string()
         } else {
-            ColoredString::no_style("")
-        });
+            "-".to_string()
+        }
+    }
 
-        sb.push_str(if self.export {
-            ColoredString::new(" Export ", None, Some(Color::Green))
+    pub(crate) fn output_type(&self) -> OutputType {
+        if self.console_url {
+            OutputType::ConsoleURL
         } else {
-            ColoredString::no_style("")
-        });
-
-        sb
+            OutputType::ResourceIdentifier
+        }
     }
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum SubCommand {
-    /// CloudWatch.
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum SubCommand {
+    /// ACM
+    #[structopt(name = "acm")]
+    Acm {
+        #[structopt(subcommand)]
+        command: Acm,
+    },
+
+    /// Athena
+    #[structopt(name = "athena")]
+    Athena {
+        #[structopt(subcommand)]
+        command: Athena,
+    },
+
+    /// AutoScaling
+    #[structopt(name = "autoscaling")]
+    Autoscaling {
+        #[structopt(subcommand)]
+        command: Autoscaling,
+    },
+
+    /// Cloudformation
+    #[structopt(name = "cloudformation")]
+    Cloudformation {
+        #[structopt(subcommand)]
+        command: Cloudformation,
+    },
+
+    /// Cloudfront
+    #[structopt(name = "cloudfront")]
+    Cloudfront {
+        #[structopt(subcommand)]
+        command: Cloudfront,
+    },
+
+    /// CloudWatch
     #[structopt(name = "cloudwatch")]
     Cloudwatch {
         #[structopt(subcommand)]
-        command: CloudwatchCommand,
+        command: Cloudwatch,
     },
 
     /// Ec2
     #[structopt(name = "ec2")]
     Ec2 {
         #[structopt(subcommand)]
-        command: Ec2Command,
+        command: Ec2,
+    },
+
+    /// ElastiCache
+    #[structopt(name = "elasticache")]
+    Elasticache {
+        #[structopt(subcommand)]
+        command: Elasticache,
+    },
+
+    /// Elastictranscoder
+    #[structopt(name = "elastictranscoder")]
+    Elastictranscoder {
+        #[structopt(subcommand)]
+        command: Elastictranscoder,
+    },
+
+    /// Elastic Load Balancing
+    #[structopt(name = "elb")]
+    Elb {
+        #[structopt(subcommand)]
+        command: Elb,
+    },
+
+    /// Elasticsearch Service
+    #[structopt(name = "es")]
+    Es {
+        #[structopt(subcommand)]
+        command: Es,
+    },
+
+    /// Firehose Service
+    #[structopt(name = "es")]
+    Firehose {
+        #[structopt(subcommand)]
+        command: Firehose,
+    },
+
+    /// IAM
+    #[structopt(name = "iam")]
+    Iam {
+        #[structopt(subcommand)]
+        command: Iam,
+    },
+
+    /// Kinesis
+    #[structopt(name = "kinesis")]
+    Kinesis {
+        #[structopt(subcommand)]
+        command: Kinesis,
+    },
+
+    /// Lambda
+    #[structopt(name = "lambda")]
+    Lambda {
+        #[structopt(subcommand)]
+        command: Lambda,
     },
 
     /// Cloudwatch Logs.
     #[structopt(name = "logs")]
     Logs {
         #[structopt(subcommand)]
-        command: LogsCommand,
+        command: Logs,
     },
 
     /// RDS.
-    #[structopt(name = "ssm")]
+    #[structopt(name = "rds")]
     Rds {
         #[structopt(subcommand)]
         command: RdsCommand,
     },
 
-    /// Systems Manager.
+    /// Route53
+    #[structopt(name = "route53")]
+    Route53 {
+        #[structopt(subcommand)]
+        command: Route53,
+    },
+
+    /// S3
+    #[structopt(name = "s3")]
+    S3 {
+        #[structopt(subcommand)]
+        command: S3Command,
+    },
+
+    /// Systems Manager
     #[structopt(name = "ssm")]
     Ssm {
         #[structopt(subcommand)]
-        command: SsmCommand,
-    },
-
-    /// List or delete cached api responses.
-    #[structopt(name = "cache")]
-    Cache {
-        #[structopt(subcommand)]
-        command: CacheCommand,
+        command: Ssm,
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum Ec2Command {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Ec2 {
     #[structopt(name = "instance")]
     Instance,
+    #[structopt(name = "launch-template")]
+    LaunchTemplate,
+    #[structopt(name = "image")]
+    Image,
+    #[structopt(name = "security-group")]
+    SecurityGroup,
+    #[structopt(name = "subnet")]
+    Subnet,
+    #[structopt(name = "vpc")]
+    Vpc,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum LogsCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elasticache {
+    #[structopt(name = "cache-cluster")]
+    CacheCluster,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elastictranscoder {
+    #[structopt(name = "pipeline")]
+    Pipeline,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Elb {
+    #[structopt(name = "load-balancer")]
+    LoadBalancer,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Es {
+    #[structopt(name = "domain")]
+    Domain,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Firehose {
+    #[structopt(name = "delivery-stream")]
+    DeliveryStream,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Iam {
+    #[structopt(name = "user")]
+    User,
+    #[structopt(name = "group")]
+    Group,
+    #[structopt(name = "role")]
+    Role,
+    #[structopt(name = "policy")]
+    Policy,
+    #[structopt(name = "mfa-device")]
+    MfaDevice,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Kinesis {
+    #[structopt(name = "stream")]
+    Stream,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Logs {
     #[structopt(name = "log-group")]
     LogGroup,
     #[structopt(name = "log-stream")]
@@ -175,14 +329,26 @@ pub enum LogsCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum RdsCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Lambda {
+    #[structopt(name = "function")]
+    Function,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum RdsCommand {
     #[structopt(name = "db-instance")]
     DbInstance,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum SsmCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum S3Command {
+    #[structopt(name = "bucket")]
+    Bucket,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Ssm {
     #[structopt(name = "automation-execution")]
     AutomationExecution,
     #[structopt(name = "document")]
@@ -194,20 +360,60 @@ pub enum SsmCommand {
     },
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum CloudwatchCommand {
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudformation {
+    #[structopt(name = "stack")]
+    Stack,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudfront {
+    #[structopt(name = "distribution")]
+    Distribution,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Cloudwatch {
     #[structopt(name = "alarm")]
     Alarm,
     #[structopt(name = "alarm-history")]
     AlarmHistory,
+    #[structopt(name = "metric")]
+    Metric,
+    #[structopt(name = "dashboard")]
+    Dashboard,
 }
 
-#[derive(StructOpt, Debug, PartialEq)]
-pub enum CacheCommand {
-    /// Creates session or assume role based on provided profile type.
-    #[structopt(name = "list")]
-    List,
-    /// Creates session or assume role based on provided profile type.
-    #[structopt(name = "clear")]
-    Clear,
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Acm {
+    #[structopt(name = "certificate")]
+    Certificate,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Athena {
+    #[structopt(name = "query-execution")]
+    QueryExecution,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Autoscaling {
+    #[structopt(name = "auto-scaling-group")]
+    AutoScalingGroup,
+}
+
+#[derive(StructOpt, Debug, PartialEq, Clone, Serialize)]
+pub(crate) enum Route53 {
+    #[structopt(name = "hosted-zone")]
+    HostedZone,
+    #[structopt(name = "resource-record-set")]
+    ResourceRecordSet {
+        /// hosted zone id
+        zone_id: Option<String>,
+    },
+}
+
+pub(crate) enum OutputType {
+    ResourceIdentifier,
+    ConsoleURL,
 }

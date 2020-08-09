@@ -1,27 +1,42 @@
 use crate::service::prelude::*;
 
 #[derive(Serialize)]
-pub struct Resource {
+pub(crate) struct Resource {
     info: Info,
 }
 
-pub fn new() -> Resource {
+pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            key_attribute: "AutomationExecutionId",
+            sub_command: Some(SubCommand::Ssm {
+                command: Ssm::AutomationExecution,
+            }),
+            key_attribute: Some("automation_execution_id"),
             service_name: "ssm",
             resource_type_name: "automation_execution",
-            api_type: ApiType::Json {
-                service_name: "ssm",
-                target: "AmazonSSM.DescribeAutomationExecutions",
-                json: json!({}),
-                limit_name: "MaxResults",
-                token_name: "NextToken",
-                parameter_name: None,
+            header: vec!["status", "name", "time", "end at"],
+            list_api: ListApi {
+                format: ListFormat::Json(ListJson {
+                    method: JsonListMethod::Post {
+                        target: "AmazonSSM.DescribeAutomationExecutions",
+                    },
+                    service_name: "ssm",
+                    json: json!({}),
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 50,
+                    }),
+                    token_name: Some("NextToken"),
+                    parameter_name: None,
+                }),
+                document: DocumentUrl(
+                    "systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
+                ),
             },
-
-            document_url: "https://docs.aws.amazon.com/systems-manager/latest/APIReference/API_DescribeAutomationExecutions.html",
-            max_limit: 50,
+            get_api: None,
+            resource_url: Some(Regional(
+                "systems-manager/automation/execution/{execution_id}",
+            )),
         },
     }
 }
@@ -31,38 +46,44 @@ impl AwsResource for Resource {
         &self.info
     }
 
-    fn matching_sub_command(&self) -> Option<SubCommand> {
-        Some(SubCommand::Ssm {
-            command: SsmCommand::AutomationExecution,
-        })
+    fn list_and_next_token(&self, yaml: &Yaml) -> (ResourceList, Option<String>) {
+        (
+            make_resource_list(self, &yaml["automation_execution_metadata_list"]),
+            next_token(&yaml, Some("next_token")),
+        )
     }
 
-    fn make_vec(&self, yaml: &Yaml) -> (Vec<Yaml>, Option<String>) {
-        json_helper::make_vec(&yaml, "automation_execution_metadata_list")
-    }
-
-    fn line(&self, item: &Yaml) -> Vec<String> {
+    fn line(&self, list: &Yaml, _get: &Option<Yaml>) -> Vec<String> {
         vec![
-            show::raw(&item["document_name"]),
-            show::raw(&item["automation_execution_status"]),
-            show::duration(&item["execution_start_time"], &item["execution_end_time"]),
-            show::time(&item["execution_end_time"]),
+            raw(&list["automation_execution_status"]),
+            raw(&list["document_name"]),
+            duration(&list["execution_start_time"], &list["execution_end_time"]),
+            time(&list["execution_end_time"]),
         ]
     }
 
-    fn detail(&self, yaml: &Yaml) -> String {
-        show::Section::new(&yaml)
+    fn detail(&self, list: &Yaml, get: &Option<Yaml>, region: &str) -> Section {
+        Section::new(list)
             .yaml_name("automation_execution_id")
-            .raw("status", "automation_execution_status")
-            .span(
+            .resource_url(self.console_url(list, get, region))
+            .raw_n("status", &["automation_execution_status"])
+            .duration(
                 "execution time",
                 ("execution_start_time", "execution_end_time"),
             )
-            .raw("type", "automation_type")
-            .raw("document", "document_name")
-            .raw("document version", "document_version")
-            .raw("executed by", "executed_by")
-            .raw("mode", "mode")
-            .print_all()
+            .span("from to", ("execution_start_time", "execution_end_time"))
+            .raw("automation_type")
+            .raw("document_name")
+            .raw("document_version")
+            .raw("executed_by")
+            .raw("mode")
+    }
+
+    fn url_params(&self, list: &Yaml, _get: &Option<Yaml>) -> Option<Vec<ParamSet>> {
+        Some(vec![(
+            "execution_id",
+            raw(&list["automation_execution_id"]),
+            true,
+        )])
     }
 }

@@ -1,9 +1,9 @@
 use thiserror::Error;
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Error, Debug)]
-pub enum Error {
+pub(crate) enum Error {
     #[error("AWS API call error: {0:}")]
     ParseRegionError(#[from] rusoto_signature::region::ParseRegionError),
 
@@ -39,4 +39,13 @@ pub enum Error {
 
     #[error("parameter error {0}")]
     ParameterError(String),
+
+    #[error("std::io::error {0:?}")]
+    TermError(#[from] std::io::Error),
+
+    #[error("rustbox init error {0:?}")]
+    RustboxError(#[from] rustbox::InitError),
+
+    #[error("url encode error {0:?}")]
+    SerdeUrlEncodeError(#[from] serde_urlencoded::ser::Error),
 }
