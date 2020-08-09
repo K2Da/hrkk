@@ -10,6 +10,9 @@ homepage = "https://github.com/K2Da/hrkk"
 repository = "https://github.com/K2Da/hrkk"
 keywords = ["aws", "cli"]
 
+[profile.release]
+lto = true
+
 [dependencies]
 tokio = { version = "0.2.*", features = ["full"] }
 rusoto_core = "0.45.*"
