@@ -205,7 +205,7 @@ impl ListJson {
 pub(crate) struct GetApi {
     pub(crate) param_path: Vec<&'static str>,
     pub(crate) format: GetFormat,
-    pub(crate) document: &'static str,
+    pub(crate) document: DocumentUrl,
 }
 
 #[derive(Serialize, Clone)]

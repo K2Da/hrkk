@@ -8,17 +8,24 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Kinesis { command: Kinesis::Stream }),
+            sub_command: Some(SubCommand::Kinesis {
+                command: Kinesis::Stream,
+            }),
             key_attribute: Some("stream_name"),
             service_name: "kinesis",
             resource_type_name: "stream",
             header: vec!["name", "creation timestamp"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
-                    method: JsonListMethod::Post { target: "Kinesis_20131202.ListStreams", },
+                    method: JsonListMethod::Post {
+                        target: "Kinesis_20131202.ListStreams",
+                    },
                     service_name: "kinesis",
                     json: json!({}),
-                    limit: Some(Limit { name: "Limit", max: 10000 }),
+                    limit: Some(Limit {
+                        name: "Limit",
+                        max: 10000,
+                    }),
                     token_name: Some("ExclusiveStartStreamName"),
                     parameter_name: None,
                 }),
@@ -33,9 +40,11 @@ pub(crate) fn new() -> Resource {
                     target: Some("Kinesis_20131202.DescribeStream"),
                     parameter_name: Some("StreamName"),
                 }),
-                document: "https://docs.aws.amazon.com/kinesis/latest/APIReference/API_DescribeStream.html",
+                document: DocumentUrl("kinesis/latest/APIReference/API_DescribeStream.html"),
             }),
-            resource_url: Some(Regional("kinesis/home?#/streams/details/{stream_name}/details")),
+            resource_url: Some(Regional(
+                "kinesis/home?#/streams/details/{stream_name}/details",
+            )),
         },
     }
 }

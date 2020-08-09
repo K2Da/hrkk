@@ -8,7 +8,9 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Cloudwatch { command: Cloudwatch::Metric }),
+            sub_command: Some(SubCommand::Cloudwatch {
+                command: Cloudwatch::Metric,
+            }),
             key_attribute: Some("dashboard"),
             service_name: "cloudwatch",
             resource_type_name: "dashboard",
@@ -21,13 +23,12 @@ pub(crate) fn new() -> Resource {
                     iteration_tag: vec!["member"],
                     limit: None,
                     token_name: "NextToken",
-                    params: vec![
-                        ("Action", "ListDashboards"),
-                        ("Version", "2010-08-01"),
-                    ],
+                    params: vec![("Action", "ListDashboards"), ("Version", "2010-08-01")],
                     region: None,
                 }),
-                document: DocumentUrl("AmazonCloudWatch/latest/APIReference/API_ListDashboards.html"),
+                document: DocumentUrl(
+                    "AmazonCloudWatch/latest/APIReference/API_ListDashboards.html",
+                ),
             },
             get_api: Some(GetApi {
                 param_path: vec!["dashboard_name"],
@@ -37,11 +38,11 @@ pub(crate) fn new() -> Resource {
                     version: "2010-08-01",
                     parameter_name: "DashboardName",
                 }),
-                document: "https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetDashboard.html",
+                document: DocumentUrl("AmazonCloudWatch/latest/APIReference/API_GetDashboard.html"),
             }),
-            resource_url: Some(
-                Regional("cloudwatch/home?#dashboards:name={dashboard_name}")
-            ),
+            resource_url: Some(Regional(
+                "cloudwatch/home?#dashboards:name={dashboard_name}",
+            )),
         },
     }
 }

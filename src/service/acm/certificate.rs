@@ -40,8 +40,7 @@ pub(crate) fn new() -> Resource {
                     target: Some("CertificateManager.GetCertificate"),
                     parameter_name: Some("CertificateArn"),
                 }),
-                document:
-                    "https://docs.aws.amazon.com/acm/latest/APIReference/API_GetCertificate.html",
+                document: DocumentUrl("acm/latest/APIReference/API_GetCertificate.html"),
             }),
             resource_url: Some(Regional("acm/home")),
         },

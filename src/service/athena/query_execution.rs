@@ -8,17 +8,24 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Athena { command: Athena::QueryExecution }),
+            sub_command: Some(SubCommand::Athena {
+                command: Athena::QueryExecution,
+            }),
             key_attribute: None,
             service_name: "athena",
             resource_type_name: "query_execution",
             header: vec!["query execution id", "state", "completion time"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
-                    method: JsonListMethod::Post { target: "AmazonAthena.ListQueryExecutions", },
+                    method: JsonListMethod::Post {
+                        target: "AmazonAthena.ListQueryExecutions",
+                    },
                     service_name: "athena",
                     json: json!({}),
-                    limit: Some(Limit { name: "MaxResults", max: 50 }),
+                    limit: Some(Limit {
+                        name: "MaxResults",
+                        max: 50,
+                    }),
                     token_name: Some("NextToken"),
                     parameter_name: None,
                 }),
@@ -33,7 +40,7 @@ pub(crate) fn new() -> Resource {
                     target: Some("AmazonAthena.GetQueryExecution"),
                     parameter_name: Some("QueryExecutionId"),
                 }),
-                document: "https://docs.aws.amazon.com/athena/latest/APIReference/API_GetQueryExecution.html",
+                document: DocumentUrl("athena/latest/APIReference/API_GetQueryExecution.html"),
             }),
             resource_url: Some(Regional("athena/home?#query/history/{execution_id}")),
         },

@@ -35,7 +35,7 @@ pub(crate) fn new() -> Resource {
                     target: None,
                     parameter_name: None,
                 }),
-                document: "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain",
+                document: DocumentUrl("elasticsearch-service/latest/developerguide/es-configuration-api.html#es-configuration-api-actions-describeelasticsearchdomain"),
             }),
             resource_url: Some(Regional("es/home?#domain:resource={domain_name};action=dashboard")),
         },

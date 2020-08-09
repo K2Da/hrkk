@@ -8,17 +8,24 @@ pub(crate) struct Resource {
 pub(crate) fn new() -> Resource {
     Resource {
         info: Info {
-            sub_command: Some(SubCommand::Firehose { command: Firehose::DeliveryStream }),
+            sub_command: Some(SubCommand::Firehose {
+                command: Firehose::DeliveryStream,
+            }),
             key_attribute: Some("delivery_stream_name"),
             service_name: "firehose",
             resource_type_name: "delivery_stream",
             header: vec!["name", "create timestamp"],
             list_api: ListApi {
                 format: ListFormat::Json(ListJson {
-                    method: JsonListMethod::Post { target: "Firehose_20150804.ListDeliveryStreams", },
+                    method: JsonListMethod::Post {
+                        target: "Firehose_20150804.ListDeliveryStreams",
+                    },
                     service_name: "firehose",
                     json: json!({}),
-                    limit: Some(Limit { name: "Limit", max: 10000 }),
+                    limit: Some(Limit {
+                        name: "Limit",
+                        max: 10000,
+                    }),
                     token_name: Some("ExclusiveStartDeliveryStreamName"),
                     parameter_name: None,
                 }),
@@ -33,7 +40,9 @@ pub(crate) fn new() -> Resource {
                     target: Some("Firehose_20150804.DescribeDeliveryStream"),
                     parameter_name: Some("DeliveryStreamName"),
                 }),
-                document: "https://docs.aws.amazon.com/firehose/latest/APIReference/API_DescribeDeliveryStream.html"
+                document: DocumentUrl(
+                    "firehose/latest/APIReference/API_DescribeDeliveryStream.html",
+                ),
             }),
             resource_url: Some(Regional("firehose/home?#/details/{delivery_stream_name}")),
         },

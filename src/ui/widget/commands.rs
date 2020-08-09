@@ -109,7 +109,7 @@ impl Commands {
 
                 if let Some(get) = &info.get_api {
                     section = section.str("Get API", &get.format.name());
-                    section = section.str("docs", get.document);
+                    section = section.str("docs", &get.document.url());
                 }
 
                 if let Some(url) = &info.resource_url {
